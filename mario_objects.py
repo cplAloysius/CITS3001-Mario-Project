@@ -8,11 +8,21 @@ import numpy as np
 # other constants (don't change these)
 SCREEN_HEIGHT   = 240
 SCREEN_WIDTH    = 256
+
+# stage 1
 MARIO_THRESHOLD = 0.8
 GOOMBA_THRESHOLD = 0.7
 KOOPA_THRESHOLD = 0.9
 BLOCK_THRESHOLD = 0.9
 PIPE_THRESHOLD = 0.9
+
+#stage 2
+MARIO_THRESHOLD2 = 0.6
+GOOMBA_THRESHOLD2 = 0.7
+KOOPA_THRESHOLD2 = 0.9
+BLOCK_THRESHOLD2 = 0.8
+PIPE_THRESHOLD2 = 0.9
+
 
 ################################################################################
 # TEMPLATES FOR LOCATING OBJECTS
@@ -28,30 +38,30 @@ mario_last_central_x = 0
 mario_last_y = 0
 mario_x_timer = 0
 
-#load templates in BGR format
-mario_template = [cv.imread('templates/marioA.png', cv.IMREAD_GRAYSCALE), 
-                   cv.imread('templates/marioB.png', cv.IMREAD_GRAYSCALE),
-                   cv.imread('templates/marioC.png', cv.IMREAD_GRAYSCALE),
-                   cv.imread('templates/marioD.png', cv.IMREAD_GRAYSCALE),
-                   cv.imread('templates/marioE.png', cv.IMREAD_GRAYSCALE),
-                   cv.imread('templates/marioF.png', cv.IMREAD_GRAYSCALE),
-                   cv.imread('templates/marioG.png', cv.IMREAD_GRAYSCALE)]
+# load templates in grayscale format
+# mario_template = [cv.imread('marioA.png', cv.IMREAD_GRAYSCALE), 
+#                    cv.imread('marioB.png', cv.IMREAD_GRAYSCALE),
+#                    cv.imread('marioC.png', cv.IMREAD_GRAYSCALE),
+#                    cv.imread('marioD.png', cv.IMREAD_GRAYSCALE),
+#                    cv.imread('marioE.png', cv.IMREAD_GRAYSCALE),
+#                    cv.imread('marioF.png', cv.IMREAD_GRAYSCALE),
+#                    cv.imread('marioG.png', cv.IMREAD_GRAYSCALE)]
 
-goomba_template = [cv.imread('templates/goomba.png', cv.IMREAD_GRAYSCALE)]
+# goomba_template = [cv.imread('goomba.png', cv.IMREAD_GRAYSCALE)]
 
-koopa_template = [cv.imread('templates/koopaA.png', cv.IMREAD_GRAYSCALE),
-                   cv.imread('templates/koopaB.png', cv.IMREAD_GRAYSCALE),
-                   cv.imread('templates/koopaC.png', cv.IMREAD_GRAYSCALE),
-                   cv.imread('templates/koopaD.png', cv.IMREAD_GRAYSCALE)]
+# koopa_template = [cv.imread('koopaA.png', cv.IMREAD_GRAYSCALE),
+#                    cv.imread('koopaB.png', cv.IMREAD_GRAYSCALE),
+#                    cv.imread('koopaC.png', cv.IMREAD_GRAYSCALE),
+#                    cv.imread('koopaD.png', cv.IMREAD_GRAYSCALE)]
  
-ground_template = [cv.imread('templates/block2.png', cv.IMREAD_GRAYSCALE)]
+# ground_template = [cv.imread('block2.png', cv.IMREAD_GRAYSCALE)]
 
-stair_template = [cv.imread('templates/block4.png', cv.IMREAD_GRAYSCALE)]
+# stair_template = [cv.imread('block4.png', cv.IMREAD_GRAYSCALE)]
 
-pipe_template = [cv.imread('templates/pipe_upper_section.png', cv.IMREAD_GRAYSCALE)]
+# pipe_template = [cv.imread('pipe_upper_section.png', cv.IMREAD_GRAYSCALE)]
 
-
-mario_template2 = [cv.imread('templates/marioA.png', cv.IMREAD_COLOR), 
+#load templates in BGR format
+mario_template = [cv.imread('templates/marioA.png', cv.IMREAD_COLOR), 
                   cv.imread('templates/marioB.png', cv.IMREAD_COLOR),
                   cv.imread('templates/marioC.png', cv.IMREAD_COLOR),
                   cv.imread('templates/marioD.png', cv.IMREAD_COLOR),
@@ -59,18 +69,18 @@ mario_template2 = [cv.imread('templates/marioA.png', cv.IMREAD_COLOR),
                   cv.imread('templates/marioF.png', cv.IMREAD_COLOR),
                   cv.imread('templates/marioG.png', cv.IMREAD_COLOR)]
 
-goomba_template2 = [cv.imread('templates/goomba.png', cv.IMREAD_COLOR)]
+goomba_template = [cv.imread('templates/goomba.png', cv.IMREAD_COLOR)]
 
-koopa_template2 = [cv.imread('templates/koopaA.png', cv.IMREAD_COLOR),
+koopa_template = [cv.imread('templates/koopaA.png', cv.IMREAD_COLOR),
                   cv.imread('templates/koopaB.png', cv.IMREAD_COLOR),
                   cv.imread('templates/koopaC.png', cv.IMREAD_COLOR),
                   cv.imread('templates/koopaD.png', cv.IMREAD_COLOR)]
 
-ground_template2 = [cv.imread('templates/block2.png', cv.IMREAD_COLOR)]
+ground_template = [cv.imread('templates/block2.png', cv.IMREAD_COLOR)]
 
-stair_template2 = [cv.imread('templates/block4.png', cv.IMREAD_COLOR)]
+stair_template = [cv.imread('templates/block4.png', cv.IMREAD_COLOR)]
 
-pipe_template2 = [cv.imread('templates/pipe_upper_section.png', cv.IMREAD_COLOR)]
+pipe_template = [cv.imread('templates/pipe_upper_section.png', cv.IMREAD_COLOR)]
 
 def sky_mask2(templates):
     masks = []
@@ -82,17 +92,56 @@ def sky_mask2(templates):
         masks.append(mask)
     return masks
 
-mario_masks = sky_mask2(mario_template2)
-goomba_masks = sky_mask2(goomba_template2)
-koopa_masks = sky_mask2(koopa_template2)
-ground_masks = sky_mask2(ground_template2)
-stair_masks = sky_mask2(stair_template2)
-pipe_masks = sky_mask2(pipe_template2)
+# mask the sky using BGR templates
+mario_masks = sky_mask2(mario_template)
+goomba_masks = sky_mask2(goomba_template)
+koopa_masks = sky_mask2(koopa_template)
+ground_masks = sky_mask2(ground_template)
+stair_masks = sky_mask2(stair_template)
+pipe_masks = sky_mask2(pipe_template)
+
+def to_gray(templates):
+    new_templates = []
+    for template in templates:
+        new_template = cv.cvtColor(template, cv.COLOR_BGR2GRAY)
+        new_templates.append(new_template)
+    return new_templates
+
+mario_template = to_gray(mario_template)
+goomba_template = to_gray(goomba_template)
+koopa_template = to_gray(koopa_template)
+ground_template = to_gray(ground_template)
+stair_template = to_gray(stair_template)
+pipe_template = to_gray(pipe_template)
 
 ################################################################################
 # LOCATING OBJECTS
 
-def _locate_objects(screen, templates, threshold, subview=None, masks=None):
+def get_thresh(info):
+    mario_thresh = MARIO_THRESHOLD
+    goomba_thresh = GOOMBA_THRESHOLD
+    koopa_thresh = KOOPA_THRESHOLD
+    block_thresh = BLOCK_THRESHOLD
+    pipe_thresh = PIPE_THRESHOLD
+    
+    if info["world"] == 1 and info["stage"] == 2:
+        mario_thresh = MARIO_THRESHOLD2
+        goomba_thresh = GOOMBA_THRESHOLD2
+        koopa_thresh = KOOPA_THRESHOLD2
+        block_thresh = BLOCK_THRESHOLD2
+        pipe_thresh = PIPE_THRESHOLD2
+    
+    return mario_thresh, goomba_thresh, koopa_thresh, block_thresh, pipe_thresh
+
+def black_sky(screen):
+    black_mask = cv.inRange(screen, (0,0,0), (0,0,0))
+    replacement_colour = (252, 136, 104)
+    replacement_image = np.full_like(screen, replacement_colour)
+    result = cv.bitwise_and(screen, screen, mask=cv.bitwise_not(black_mask))
+    result = cv.add(result, replacement_image)
+    return result
+
+def _locate_objects(screen, templates, threshold, subview=None, masks=None, stop_early=False):
     locations = []
     i=0
 
@@ -115,13 +164,22 @@ def _locate_objects(screen, templates, threshold, subview=None, masks=None):
                 locations.extend(zip(*new_loc))
             else:
                 locations.extend(zip(*loc[::-1]))
+        
+        if stop_early and locations:
+            break
 
     return locations
 
 def locate_objects(screen, mario_x, mario_y):
-    screen = cv.cvtColor(screen, cv.COLOR_RGB2GRAY)
+    mario_thresh, goomba_thresh, koopa_thresh, block_thresh, pipe_thresh = get_thresh(info)
+    screen = cv.cvtColor(screen, cv.COLOR_RGB2BGR)
 
-    mario_positions = _locate_objects(screen, mario_template, MARIO_THRESHOLD, masks=mario_masks)
+    if info["world"] == 1 and info["stage"] == 2:
+        screen = black_sky(screen)
+
+    screen = cv.cvtColor(screen, cv.COLOR_BGR2GRAY)
+
+    mario_positions = _locate_objects(screen, mario_template, mario_thresh, masks=mario_masks, stop_early=True)
 
     if mario_x != 0:
         x_start, x_end = mario_x - 10, mario_x + 50
@@ -137,11 +195,11 @@ def locate_objects(screen, mario_x, mario_y):
 
     return {
         "mario": mario_positions,
-        "goomba": _locate_objects(screen, goomba_template, GOOMBA_THRESHOLD, subview, goomba_masks),
-        "koopa": _locate_objects(screen, koopa_template, KOOPA_THRESHOLD, subview, koopa_masks),
-        "ground": _locate_objects(screen, ground_template, BLOCK_THRESHOLD, subview, ground_masks),
-        "stair": _locate_objects(screen, stair_template, BLOCK_THRESHOLD, subview, stair_masks),
-        "pipe": _locate_objects(screen, pipe_template, PIPE_THRESHOLD, subview, pipe_masks)
+        "goomba": _locate_objects(screen, goomba_template, goomba_thresh, subview, goomba_masks),
+        "koopa": _locate_objects(screen, koopa_template, koopa_thresh, subview, koopa_masks),
+        "ground": _locate_objects(screen, ground_template, block_thresh, subview, ground_masks),
+        "stair": _locate_objects(screen, stair_template, block_thresh, subview, stair_masks),
+        "pipe": _locate_objects(screen, pipe_template, pipe_thresh, subview, pipe_masks)
     }
 
 def draw_borders(screen, object_locations):
@@ -182,7 +240,7 @@ def draw_borders(screen, object_locations):
 ################################################################################
 # GETTING INFORMATION AND CHOOSING AN ACTION
 
-def choose_action(screen, info):
+def choose_action(screen):
     global mario_last_central_x
     global mario_last_x
     global mario_last_y
@@ -304,16 +362,23 @@ def choose_action(screen, info):
 env = gym.make("SuperMarioBros-v0", apply_api_compatibility=True, render_mode="human")
 env = JoypadSpace(env, SIMPLE_MOVEMENT)
 
-screen, info = env.reset()
+screen = None
+done = True
+
+env.reset()
 
 for step in range(100000):
-    action, object_locations = choose_action(screen, info) 
+    if screen is None:
+        action = env.action_space.sample()
+        object_locations = {}
+    else:
+        action, object_locations = choose_action(screen) 
 
-    obs_border = draw_borders(screen.copy(), object_locations)
-    cv.imshow("Debug Observation", cv.cvtColor(obs_border, cv.COLOR_RGB2BGR))
-    cv.waitKey(1)
+        obs_border = draw_borders(screen.copy(), object_locations)
+        cv.imshow("Debug Observation", cv.cvtColor(obs_border, cv.COLOR_RGB2BGR))
+        cv.waitKey(1)
 
-    obs, reward, terminated, truncated, info = env.step(action)
+    screen, reward, terminated, truncated, info = env.step(action)
     if terminated or truncated:
         screen, info = env.reset()
 env.close()
