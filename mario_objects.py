@@ -199,6 +199,7 @@ def locate_objects(screen, mario_x, mario_y):
         "brick": _locate_objects(screen, brick_template, block_thresh, subview, brick_masks),
     }
 
+# used for debugging, shows bounding box of what the agent detects
 def draw_borders(screen, object_locations):
     colours = {
         "mario": (0, 0, 255),
@@ -241,10 +242,11 @@ def draw_borders(screen, object_locations):
 # GETTING INFORMATION AND CHOOSING AN ACTION
 
 def choose_action(screen):
-    global mario_last_central_x
-    global mario_last_x
-    global mario_last_y
-    global mario_x_timer
+    global mario_last_central_x # x position of mario on screen taking into account the width of mario's body
+    global mario_last_x # previous x position of mario in the world
+    global mario_last_y # previous y position of mario
+    global mario_x_timer # keeps track of how long mario stays in the same spot in the world
+
     global last_ground_block_positions
     global last_ground_block_positions_timer
     
@@ -257,7 +259,7 @@ def choose_action(screen):
     pipe_locations = object_locations["pipe"]
     brick_locations = object_locations["brick"]
 
-    action = 1
+    action = 1 # default action ["right"]
 
     if mario_locations:
         mario_central_x = mario_locations[0][0] + mario_template[0].shape[1] // 2
@@ -270,7 +272,8 @@ def choose_action(screen):
         mario_central_x = 0
         mario_world_x = 0
         mario_y = 0
-                
+
+    # to jump over a specific obstacle in stage 2 where there is a gap and a brick wall on the other side of the gap           
     if len(ground_locations) < 4:
         if brick_locations:
             for brick_x, brick_y in brick_locations:
@@ -280,6 +283,7 @@ def choose_action(screen):
     if len(ground_locations) < 2:
         action = 4
     
+    # to run left instead of jumping when there is an enemy and a brick wall above mario (this happens in stage 2)
     elif brick_locations and (koopa_locations or goomba_locations):
         for brick_x, brick_y in brick_locations:
             if (mario_y - brick_y) <= 20 and (brick_x - mario_central_x) < 30:
