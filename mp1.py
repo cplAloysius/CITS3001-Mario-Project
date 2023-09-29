@@ -20,26 +20,26 @@ from stable_baselines3.common.vec_env import VecMonitor
 from stable_baselines3.common.atari_wrappers import MaxAndSkipEnv
 from matplotlib import pyplot as plt
 
-class DiscretizedActionWrapper(ActionWrapper):
-    """ Discretizes the action space of an `env` using
-        `transform.discretize()`.
-        The `reverse_action` method is currently not implemented.
-    """
-    def __init__(self, env, steps):
-        super(DiscretizedActionWrapper, self).__init__(env)
-        trafo = discretize(env.action_space, steps)
-        self.action_space = trafo.target
-        self.action = trafo.convert_from
+# class DiscretizedActionWrapper(ActionWrapper):
+#     """ Discretizes the action space of an `env` using
+#         `transform.discretize()`.
+#         The `reverse_action` method is currently not implemented.
+#     """
+#     def __init__(self, env, steps):
+#         super(DiscretizedActionWrapper, self).__init__(env)
+#         trafo = discretize(env.action_space, steps)
+#         self.action_space = trafo.target
+#         self.action = trafo.convert_from
 
-class MarioActionWrapper(gym.ActionWrapper):
-    def __init__(self, env):
-        super(MarioActionWrapper, self).__init__(env)
-        # Change the action space to Discrete which is supported
-        self.action_space = gym.spaces.Discrete(len(env.unwrapped.get_action_meanings()))
+# class MarioActionWrapper(gym.ActionWrapper):
+#     def __init__(self, env):
+#         super(MarioActionWrapper, self).__init__(env)
+#         # Change the action space to Discrete which is supported
+#         self.action_space = gym.spaces.Discrete(len(env.unwrapped.get_action_meanings()))
 
-    def action(self, action):
-        # Convert the discrete action back to the original JoypadSpace action
-        return self.env.unwrapped._action_map[action]
+#     def action(self, action):
+#         # Convert the discrete action back to the original JoypadSpace action
+#         return self.env.unwrapped._action_map[action]
 
 
 def make_env(id, rank, seed=0):
@@ -51,7 +51,7 @@ def make_env(id, rank, seed=0):
         # env = gym_super_mario_bros.make('SuperMarioBros-v0', apply_api_compatibility=True)
         env = JoypadSpace(env, SIMPLE_MOVEMENT)
         JoypadSpace.reset = lambda self, **kwargs: self.env.reset(**kwargs)
-        env = MarioActionWrapper(env)
+        # env = MarioActionWrapper(env)
         # env = ActionConverterWrapper(env)
         # env = GrayScaleObservation(env, keep_dim=True)
         # env = gym.make(id)    
