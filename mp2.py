@@ -1,9 +1,12 @@
 import time
 import numpy as np
 import gym_super_mario_bros
-import gymnasium as gym
-import sys
-sys.modules["gym"] = gym
+# import gymnasium as gym
+import gymnasium 
+import gym
+# import sys
+# sys.modules["gym"] = gym
+
 from gymnasium.wrappers import StepAPICompatibility
 from nes_py.wrappers import JoypadSpace
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
@@ -14,6 +17,14 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.callbacks import  CheckpointCallback
 
+gymnasium.register(
+    id="SuperMarioBros-v0",
+    entry_point='gym_super_mario_bros:SuperMarioBrosEnv',
+    # StepAPICompatibility=True,
+    max_episode_steps=9999999,
+    reward_threshold=9999999,
+    nondeterministic=True,
+)
 
 def make_env(env_id, rank, seed=0):
     def _init():
@@ -39,7 +50,7 @@ BEST_MODEL_PATH = "SubprocVE_best_model"
 
 env_id = "SuperMarioBros-v0"
 # The different number of processes that will be used
-PROCESSES_TO_TEST = [1, 2, 4, 8, 16]
+PROCESSES_TO_TEST = [4]
 NUM_EXPERIMENTS = 3  # RL algorithms can often be unstable, so we run several experiments (see https://arxiv.org/abs/1709.06560)
 TRAIN_STEPS = 5000
 # Number of episodes for evaluation
@@ -91,4 +102,8 @@ for n_procs in PROCESSES_TO_TEST:
     '''
     https://stackoverflow.com/questions/73694119/how-to-register-custom-environment-with-openais-gym-package-to-use-make-vec-env
     https://github.com/DLR-RM/stable-baselines3/issues/993
+    '''
+
+    '''
+    AssertionError: action space does not inherit from `gymnasium.spaces.Space`, actual type: <class 'gym.spaces.discrete.Discrete'>
     '''

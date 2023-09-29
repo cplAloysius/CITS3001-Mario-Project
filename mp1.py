@@ -1,16 +1,22 @@
+import multiprocessing
+multiprocessing.set_start_method('spawn')
+
 import os
-import gymnasium as gym
+import gym
 import gym_super_mario_bros
 from nes_py.wrappers import JoypadSpace
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
-from gymnasium.wrappers import StepAPICompatibility
+from gym.wrappers import GrayScaleObservation
+# from gymnasium.wrappers import StepAPICompatibility
+from gymnasium.spaces import MultiDiscrete
 import sys
 sys.modules["gym"] = gym
 
 
+
 import numpy as np
 from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import SubprocVecEnv
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecFrameStack, DummyVecEnv
 from stable_baselines3.common.utils import set_random_seed
 from stable_baselines3.common.callbacks import  CheckpointCallback
 from stable_baselines3.common.evaluation import evaluate_policy
@@ -20,26 +26,29 @@ from stable_baselines3.common.vec_env import VecMonitor
 from stable_baselines3.common.atari_wrappers import MaxAndSkipEnv
 from matplotlib import pyplot as plt
 
-# class DiscretizedActionWrapper(ActionWrapper):
-#     """ Discretizes the action space of an `env` using
-#         `transform.discretize()`.
-#         The `reverse_action` method is currently not implemented.
-#     """
-#     def __init__(self, env, steps):
-#         super(DiscretizedActionWrapper, self).__init__(env)
-#         trafo = discretize(env.action_space, steps)
-#         self.action_space = trafo.target
-#         self.action = trafo.convert_from
 
-# class MarioActionWrapper(gym.ActionWrapper):
-#     def __init__(self, env):
-#         super(MarioActionWrapper, self).__init__(env)
-#         # Change the action space to Discrete which is supported
-#         self.action_space = gym.spaces.Discrete(len(env.unwrapped.get_action_meanings()))
+class JoypadToMultiDiscrete(gym.ActionWrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        self.action_space = MultiDiscrete([2, 2, 2, 2])  # [right, left, A, B]
 
-#     def action(self, action):
-#         # Convert the discrete action back to the original JoypadSpace action
-#         return self.env.unwrapped._action_map[action]
+    def action(self, multi_discrete_action):
+        # Convert MultiDiscrete action to SIMPLE_MOVEMENT action
+        actions = []
+        if multi_discrete_action[0] == 1:
+            actions.append('right')
+        if multi_discrete_action[1] == 1:
+            actions.append('left')
+        if multi_discrete_action[2] == 1:
+            actions.append('A')
+        if multi_discrete_action[3] == 1:
+            actions.append('B')
+        
+        if actions in SIMPLE_MOVEMENT:
+            return SIMPLE_MOVEMENT.index(actions)
+        else:
+            # Default to 'NOOP' if no matching action is found.
+            return 0
 
 
 def make_env(id, rank, seed=0):
@@ -47,14 +56,16 @@ def make_env(id, rank, seed=0):
     def _init():
 
         # env = StepAPICompatibility(gym_super_mario_bros.make(id, apply_api_compatibility=True, render_mode='human'))
-        env = gym_super_mario_bros.make(id, apply_api_compatibility=True, render_mode='human')
         # env = gym_super_mario_bros.make('SuperMarioBros-v0', apply_api_compatibility=True)
+        env = gym_super_mario_bros.make(id, apply_api_compatibility=True, render_mode='human')
         env = JoypadSpace(env, SIMPLE_MOVEMENT)
-        JoypadSpace.reset = lambda self, **kwargs: self.env.reset(**kwargs)
-        # env = MarioActionWrapper(env)
-        # env = ActionConverterWrapper(env)
-        # env = GrayScaleObservation(env, keep_dim=True)
-        # env = gym.make(id)    
+        env = JoypadToMultiDiscrete(env)
+        env = GrayScaleObservation(env, keep_dim=True)
+        print("OBS: ", env.observation_space)
+        if isinstance(env.observation_space, (gym.spaces.Box, gym.spaces.Dict)):
+            print("isinstance")
+        # env = VecFrameStack(env, 4, channels_order='last')
+        JoypadSpace.reset = lambda self, **kwargs: self.env.reset(**kwargs)  
         env = MaxAndSkipEnv(env, 4)
         env.reset(seed=seed+rank)
         return env
@@ -81,10 +92,9 @@ if __name__ == "__main__":
     
     id = "SuperMarioBros-v0"
     num_processes = 4
-    for i in range(num_processes):
-        env = VecMonitor(SubprocVecEnv([make_env(id, i)]))
-        env.close()
-    # env = VecMonitor(SubprocVecEnv([make_env(id, i) for i in range(num_processes)]))
+    env = VecMonitor(SubprocVecEnv([make_env(id, i) for i in range(num_processes)]), "SubprocVE_logs/TestMonitor")
+    # env = DummyVecEnv([lambda:env])
+    # env = VecMonitor(DummyVecEnv([make_env(id, 1)]))
     checkpoint_callback = CheckpointCallback(save_freq=100, save_path=LOG_DIR) #https://araffin.github.io/post/sb3/
 
     model = PPO('CnnPolicy', env, verbose=1, tensorboard_log=LOG_DIR, learning_rate=LEARNING_RATE, n_steps=N_STEPS)
