@@ -62,11 +62,11 @@ def make_env(env_id):
 if __name__ == "__main__":
     env = AsyncVectorEnv([make_env(ENV_ID) for i in range(NUM_ENVS)], shared_memory=False)
     print(env.is_vector_env) #True
-    checkpoint_callback = CheckpointCallback(save_freq=100, save_path=LOG_DIR) #https://araffin.github.io/post/sb3/
+    # checkpoint_callback = CheckpointCallback(save_freq=100, save_path=LOG_DIR) #https://araffin.github.io/post/sb3/
 
-    model = PPO('CnnPolicy', env, verbose=1, tensorboard_log=LOG_DIR, learning_rate=LEARNING_RATE, n_steps=N_STEPS)
-    model.learn(total_timesteps=TIMESTEPS, tb_log_name=LOG_NAME, callback=[checkpoint_callback])
-    model.save("Multiprocessing_model_0.000001_512")
+    # model = PPO('CnnPolicy', env, verbose=1, tensorboard_log=LOG_DIR, learning_rate=LEARNING_RATE, n_steps=N_STEPS)
+    # model.learn(total_timesteps=TIMESTEPS, tb_log_name=LOG_NAME, callback=[checkpoint_callback])
+    # model.save("Multiprocessing_model_0.000001_512")
 
     env.close()
 

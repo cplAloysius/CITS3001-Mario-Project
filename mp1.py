@@ -1,5 +1,6 @@
 import multiprocessing
-multiprocessing.set_start_method('spawn')
+# multiprocessing.set_start_method('spawn')
+multiprocessing.set_start_method('fork')
 
 import os
 import gym
@@ -92,9 +93,8 @@ if __name__ == "__main__":
     
     id = "SuperMarioBros-v0"
     num_processes = 4
-    env = VecMonitor(SubprocVecEnv([make_env(id, i) for i in range(num_processes)]), "SubprocVE_logs/TestMonitor")
-    # env = DummyVecEnv([lambda:env])
-    # env = VecMonitor(DummyVecEnv([make_env(id, 1)]))
+    # env = VecMonitor(SubprocVecEnv([make_env(id, i) for i in range(num_processes)]), "SubprocVE_logs/TestMonitor")
+    env = VecMonitor(SubprocVecEnv([make_env(id, i) for i in range(num_processes)]))
     checkpoint_callback = CheckpointCallback(save_freq=100, save_path=LOG_DIR) #https://araffin.github.io/post/sb3/
 
     model = PPO('CnnPolicy', env, verbose=1, tensorboard_log=LOG_DIR, learning_rate=LEARNING_RATE, n_steps=N_STEPS)
@@ -128,4 +128,8 @@ https://grid2op.readthedocs.io/en/latest/gym.html#default-action-space
 https://www.gymlibrary.dev/content/vectorising/
 
 https://pytorch.org/rl/tutorials/multiagent_ppo.html
+
+PIPE ERROR:
+The error seems to be related to the observation space format of your environment when setting up the PPO algorithm. 
+The NotImplementedError suggests that the Box(0, 255, (240, 256, 1), uint8) observation space is not supported.
 '''
