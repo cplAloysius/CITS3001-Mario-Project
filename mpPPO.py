@@ -124,4 +124,4 @@ def worker(process_id, global_model, optimizer, lock, action_dim, episodes_per_s
         ratio = new_action_probs / old_action_probs
         clip_epsilon = 0.2
         obj = ratio * advantages
-        obj_clipped = torch.clamp(ratio, 1.
+        obj_clipped = torch.clamp(ratio, 1.)

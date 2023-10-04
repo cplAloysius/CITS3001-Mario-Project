@@ -33,40 +33,46 @@ else:
 
 class Round:
     def __init__(self):
-        self.env = gym_super_mario_bros.make('SuperMarioBros-v3')
+        self.env = gym_super_mario_bros.make('SuperMarioBros-v3', apply_api_compatibility=True, render_mode='human')
         self.env = JoypadSpace(self.env, SIMPLE_MOVEMENT)
+        # self.env = GrayScaleObservation(self.env, keep_dim=True)
+        # self.env = ResizeObservation(self.env, shape=(84, 84))
         self.obs_4 = np.zeros((4, 84, 84))
         self.rewards = []
         self.lives = 3
 
     def fourSteps(self, action):
+        print("in fourSteps")
         totalRewards = 0
         done = False
 
         for i in range(4):
             obs, reward, terminated, truncated, info = self.env.step(action)
+            print("reward:", str(reward))
             totalRewards += reward
             livesLeft = info[0]["life"]
             if livesLeft < self.lives or terminated or truncated:
+                if livesLeft < self.lives:
+                    print("livesLeft: ", livesLeft, "self.lives", self.lives)
                 done = True
                 break
 
         obs = self.process_obs(obs)
         self.rewards.append(reward)
 
-        self.obs_4 = np.roll(self.obs_4, shift=-1, axis=0)
-        self.obs_4[-1] = obs
-
         if done:
             episode_info =  {"reward": sum(self.rewards), "length": len(self.rewards)}
             self.reset()
         else: 
             episode_info = None
+
+        self.obs_4 = np.roll(self.obs_4, shift=-1, axis=0)
+        self.obs_4[-1] = obs
         
         return self.obs_4, reward, done, episode_info
     
     def reset(self):
-        obs = self.env.reset()
+        obs, x = self.env.reset()
         obs = self.process_obs(obs)
         for i in range(4): 
             self.obs_4[i] = obs
@@ -77,6 +83,7 @@ class Round:
         obs = cv2.cvtColor(obs, cv2.COLOR_RGB2GRAY)
         obs = cv2.resize(obs, (84, 84), interpolation=cv2.INTER_AREA)
         return obs
+
 
 def worker_process(remote: multiprocessing.connection.Connection):
     round = Round()
@@ -102,4 +109,11 @@ class Worker:
 class MarioModel(nn.Module):
     def __init__(self):
         super().__init__()
-        
+
+
+
+r = Round()
+r.__init__()
+r.reset()
+action = r.env.action_space.sample()
+obs, reward, done, info = r.fourSteps(action)
