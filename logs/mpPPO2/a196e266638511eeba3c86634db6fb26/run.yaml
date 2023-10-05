@@ -1,0 +1,18 @@
+comment: ''
+commit: 5134984cce6b417c2d02c119cbc5280dcb95659d
+commit_message: debugging
+distributed_rank: 0
+distributed_world_size: 0
+is_dirty: true
+load_run: null
+name: mpPPO2
+notes: ''
+python_file: /Users/oliviamorrison/Documents/GitHub/CITS3001-Mario-Project/mpPPO2.py
+repo_remotes:
+- https://github.com/cplAloysius/CITS3001-Mario-Project.git
+start_step: 0
+tags:
+- mpPPO2
+trial_date: '2023-10-05'
+trial_time: '21:46:48'
+uuid: a196e266638511eeba3c86634db6fb26

@@ -1,0 +1,32 @@
+diff --git a/mpPPO2.py b/mpPPO2.py
+index 77e733d..2d5ffd3 100644
+--- a/mpPPO2.py
++++ b/mpPPO2.py
+@@ -20,6 +20,7 @@ from torch.distributions import Categorical
+ from torchrl.objectives import PPOLoss, ClipPPOLoss
+ from torchrl.objectives.value.functional import generalized_advantage_estimate
+ from torchrl.envs.libs.gym import _get_envs                                                         #https://pytorch.org/rl/tutorials/torchrl_envs.html
++from labml.utils.pytorch import get_modules
+ 
+ from PIL import Image
+ import torch.multiprocessing as mp
+@@ -36,14 +37,14 @@ import warnings
+ warnings.filterwarnings("ignore")
+ 
+ config_dict = {
+-    'check_repo_dirty': True,
++    'check_repo_dirty': False,
+     'data_path': 'data',
+     'experiments_path': 'logs',
+     'analytics_path': 'analytics',
+-    'web_api': 'TOKEN from app.labml.ai',
+-    'web_api_frequency': 60,
+-    'web_api_verify_connection': True,
+-    'web_api_open_browser': True,
++    'web_api': None,
++    'web_api_frequency': None,
++    'web_api_verify_connection': False,
++    'web_api_open_browser': False,
+     'indicators': [
+         {
+             'class_name': 'Scalar',
