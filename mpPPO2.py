@@ -6,6 +6,8 @@ import multiprocessing
 import multiprocessing.connection
 from typing import Dict, List
 
+import labml
+from labml import lab
 import time
 import cv2
 import numpy as np
@@ -32,6 +34,28 @@ from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 import warnings
 
 warnings.filterwarnings("ignore")
+
+config_dict = {
+    'check_repo_dirty': True,
+    'data_path': 'data',
+    'experiments_path': 'logs',
+    'analytics_path': 'analytics',
+    'web_api': 'TOKEN from app.labml.ai',
+    'web_api_frequency': 60,
+    'web_api_verify_connection': True,
+    'web_api_open_browser': True,
+    'indicators': [
+        {
+            'class_name': 'Scalar',
+            'is_print': True,
+            'name': '*'
+        }
+    ]
+}
+
+lab.configure(configurations=config_dict)
+
+print('break')
 
 if torch.cuda.is_available():
     device = torch.device("cuda:1")
