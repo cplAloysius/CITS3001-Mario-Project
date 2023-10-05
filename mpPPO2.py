@@ -2,7 +2,6 @@
     follows https://lit.labml.ai/github/vpj/rl_samples/tree/master/ppo.py
     might need to account for other vars from the info dictionary such as "flag"
 '''
-
 import multiprocessing
 import multiprocessing.connection
 from typing import Dict, List
@@ -16,16 +15,23 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torchvision.transforms as T
 from torch.distributions import Categorical
+from torchrl.objectives import PPOLoss, ClipPPOLoss
+from torchrl.objectives.value.functional import generalized_advantage_estimate
+from torchrl.envs.libs.gym import _get_envs                                                         #https://pytorch.org/rl/tutorials/torchrl_envs.html
+
 from PIL import Image
 import torch.multiprocessing as mp
 from labml import monit, tracker, logger, experiment
-# from labml import monit, tracker, logger, experiment
 
-import gym
+# import gym
 import gym_super_mario_bros
 from nes_py.wrappers import JoypadSpace
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
-from gym.wrappers import GrayScaleObservation, ResizeObservation, FrameStack
+# from gym.wrappers import GrayScaleObservation, ResizeObservation, FrameStack
+
+import warnings
+
+warnings.filterwarnings("ignore")
 
 if torch.cuda.is_available():
     device = torch.device("cuda:1")
@@ -36,6 +42,7 @@ LEARNING_RATE = 0.000001
 
 class Round:
     def __init__(self):
+        print("IN ROUND")
         self.env = gym_super_mario_bros.make('SuperMarioBros-v3', apply_api_compatibility=True, render_mode='human')
         self.env = JoypadSpace(self.env, SIMPLE_MOVEMENT)
         # self.env = GrayScaleObservation(self.env, keep_dim=True)
@@ -77,15 +84,18 @@ class Round:
             self.obs_4[i] = obs
         self.rewards = []
         self.lives = 2
+        return self.obs_4
 
     def process_obs(self, obs):
         obs = cv2.cvtColor(obs, cv2.COLOR_RGB2GRAY)
         obs = cv2.resize(obs, (84, 84), interpolation=cv2.INTER_AREA)
+        print("PROCESSED OBS")
         return obs
 
 
 def worker_process(remote: multiprocessing.connection.Connection):
     round = Round()
+    print("AFTER ROUND")
 
     while True:
         cmd, data = remote.recv()
@@ -163,13 +173,14 @@ class Main:
 
         self.workers = [Worker() for i in range(self.n_workers)]
 
-        # initialize tensors for observations
+        # initialise tensors for observations
         self.obs = np.zeros((self.n_workers, 4, 84, 84), dtype=np.uint8) # {self.obs.shape} is (4, 4, 84, 84)
 
         for worker in self.workers:
             worker.child.send(("reset", None))
         for i, worker in enumerate(self.workers):
-            self.obs[i] = worker.child.recv()
+                self.obs[i] = worker.child.recv()
+                print("got thru")
 
         self.model = MarioModel().to(device) # laptop = CPU, PC = GPU
 
@@ -203,17 +214,185 @@ class Main:
                     worker.child.send(("step", actions[w, t]))
                 for w, worker in enumerate(self.workers):
                     self.obs[w], rewards[w, t], done[w, t], info = worker.child.recv()                                              # <- might need 5 values here
+                    tracker.add('reward', info['reward'])                                                                           # <- might want to track more values
+
+                advantages = self._calc_advantages(done, rewards, values)
+                samples = {
+                    'obs': obs,
+                    'actions': actions,
+                    'values': values,
+                    'log_pis': log_pis,
+                    'advantages': advantages
+                }
+
+                samples_flat = {}
+                for k, v in samples.items():
+                    v = v.reshape(v.shape[0] * v.shape[1], *v.shape[2:])
+                    if k == 'obs':
+                        samples_flat[k] = obs_to_torch(v)
+                    else:
+                        samples_flat[k] = torch.tensor(v, device=device)
+
+                return samples_flat
+            
+    def _calc_advantages(self, done: np.ndarray, rewards: np.ndarray, values: np.ndarray) -> np.ndarray:
+        # Ensure the input numpy arrays are converted to PyTorch tensors and moved to the correct device.
+        rewards_t = torch.tensor(rewards[..., None], dtype=torch.float32, device=self.device)
+        done_t = torch.tensor(done[..., None], dtype=torch.float32, device=self.device)
+        values_t = torch.tensor(values[..., None], dtype=torch.float32, device=self.device)
+
+        # Assume that the last observed state is the next state after the last state in the trajectory.
+        _, last_value_t = self.model(obs_to_torch(self.obs))
+        last_value_t = last_value_t.squeeze(-1)[..., None]
+
+        # Using generalized_advantage_estimate function
+        next_state_values_t = torch.cat([values_t[..., 1:], last_value_t], dim=-2)
+        advantages, _ = generalized_advantage_estimate(
+            gamma=self.gamma,
+            lmbda=self.lamda,
+            state_value=values_t,
+            next_state_value=next_state_values_t,
+            reward=rewards_t,
+            done=done_t
+        )
+
+        # Convert advantages back to numpy 
+        return advantages.squeeze(-1).cpu().numpy()
+    
+    def train(self, samples: Dict[str, torch.Tensor], learning_rate: float, clip_range: float):
+        
+        for i in range(self.epochs):
+            # trains with a small random subset of the data
+            indexes = torch.randperm(self.batch_size)
+            for start in range(0, self.batch_size, self.mini_batch_size):
+                end = start + self.mini_batch_size
+                mini_batch_indexes = indexes[start: end]
+                mini_batch = {}
+                for k, v in samples.items():
+                    mini_batch[k] = v[mini_batch_indexes]
                 
-                if info:
-                    tracker.add('reward', info['reward'])
-                    tracker.add('length', info['length'])
+                # get loss - how difference between model's predictions and desired outcomes
+                loss = self._calc_loss(clip_range=clip_range, samples=mini_batch)
 
-                # torchrl.objectives.value.functional.generalized_advantage_estimate
+                # calculate gradients - rate of change of loss with respect to model parameters
+                for pg in self.optimizer.param_groups:
+                    pg['lr'] = learning_rate
+                self.optimizer.zero_grad()
+                loss.backward()
 
-                '''
-                # Calculate V_{phi, k}
-                V = self.evaluate(batch_obs)
-                # ALG STEP 5
-                # Calculate advantage
-                A_k = batch_rtgs - V.detach()
-                '''
+                # clip gradient
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.5)
+                # update model parameters
+                self.optimizer.step()
+
+    def _normalize(adv: torch.Tensor):
+        # adv is a tensor containing advantage values
+        # used to manage scale of advantages and stabilise training
+        return (adv - adv.mean()) / (adv.std() + 1e-8)
+    
+    def _calc_loss(self, samples: Dict[str, torch.Tensor], clip_range: float) -> torch.Tensor: #returns a tensor representing loss
+
+        # calculate expected reward approximated by the sum of the est. value and advantage
+        sampled_return = samples['values'] + samples['advantages']
+
+        # normalise to stabilise
+        sampled_normalized_advantage = self._normalize(samples['advantages'])
+
+        # pass obs thru model to get policy and value function
+        # policy (pi) defines probability distribution over actions
+        # value function estimates expected future rewards
+        pi, value = self.model(samples['obs'])
+
+        '''POLICY LOSS'''
+        # compute probabilities of taking actions under the policy
+        log_pi = pi.log_prob(samples['actions'])
+
+        # ratio - how much the policy has changed since the data was sampled in terms of the probability of taking certain actions in given states
+        # ratio - difference between the new policy's log probability and the old policy's log probability
+        ratio = torch.exp(log_pi - samples['log_pis'])
+
+        # ensures that the policy does not change too drastically by clipping the ratio
+        # clip range defines how much change is allowed
+        clipped_ratio = ratio.clamp(min=1.0 - clip_range, max=1.0 + clip_range)
+
+        # takes minimum of the OG policy gradient update and 
+        #  the clipped policy gradient update to compute policy reward
+        policy_reward = torch.min(ratio * sampled_normalized_advantage,
+                                clipped_ratio * sampled_normalized_advantage)
+        policy_reward = policy_reward.mean()
+
+
+        '''ENTROPY BONUS'''
+        # encourages exploration by adding a bonus for more random policies
+        entropy_bonus = pi.entropy()
+        # calculated as the entropy of the policy and averaged over all data points
+        entropy_bonus = entropy_bonus.mean()
+
+
+        '''VALUE LOSS'''
+        # make value estimate close to estimated return
+        # clipped to avoid large updates
+        clipped_value = samples['values'] + (value - samples['values']).clamp(min=-clip_range, max=clip_range)
+        vf_loss = torch.max((value - sampled_return) ** 2, (clipped_value - sampled_return) ** 2)
+        vf_loss = 0.5 * vf_loss.mean()
+
+
+        '''TOTAL LOSS'''
+        # scale down value loss and entropy bonus so they don't dominate policy reward
+        loss = -(policy_reward - 0.5 * vf_loss + 0.01 * entropy_bonus)
+
+        # approximate KL divergence and the fraction of the policy ratio that is clipped - for training
+        approx_kl_divergence = .5 * ((samples['log_pis'] - log_pi) ** 2).mean()
+        clip_fraction = (abs((ratio - 1.0)) > clip_range).to(torch.float).mean()
+
+        tracker.add({'policy_reward': policy_reward, 'vf_loss': vf_loss, 'entropy_bonus': entropy_bonus, 'kl_div': approx_kl_divergence, 'clip_fraction': clip_fraction})
+
+        return loss
+    
+    def run_training_loop(self):
+        """
+        ### Run training loop
+        """
+
+        # last 100 episode information
+        tracker.set_queue('reward', 100, True)
+        tracker.set_queue('length', 100, True)
+
+        for update in monit.loop(self.updates):
+            progress = update / self.updates
+
+            # decreasing `learning_rate` and `clip_range` $\epsilon$
+            learning_rate = 2.5e-4 * (1 - progress)
+            clip_range = 0.1 * (1 - progress)
+
+            # sample with current policy
+            samples = self.sample()
+
+            # train the model
+            self.train(samples, learning_rate, clip_range)
+
+            # write summary info to the writer, and log to the screen
+            tracker.save()
+            if (update + 1) % 1_000 == 0:
+                logger.log()
+
+    def destroy(self):
+        """
+        ### Destroy
+        Stop the workers
+        """
+        for worker in self.workers:
+            worker.child.send(("close", None))
+
+# ## Run it
+if __name__ == "__main__":
+    experiment.create()
+    m = Main()
+    experiment.start()
+    m.run_training_loop()
+    m.destroy()
+
+
+
+
+
