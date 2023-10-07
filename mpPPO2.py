@@ -303,7 +303,6 @@ class Main:
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.5)
                 # update model parameters
                 self.optimizer.step()
-                print("train")
 
     @staticmethod
     def _normalize(adv: torch.Tensor):
