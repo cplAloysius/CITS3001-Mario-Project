@@ -17,20 +17,14 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torchvision.transforms as T
 from torch.distributions import Categorical
-from torchrl.objectives import PPOLoss, ClipPPOLoss
-from torchrl.objectives.value.functional import generalized_advantage_estimate
-from torchrl.envs.libs.gym import _get_envs                                                         #https://pytorch.org/rl/tutorials/torchrl_envs.html
-from labml.utils.pytorch import get_modules
 
 from PIL import Image
 import torch.multiprocessing as mp
 from labml import monit, tracker, logger, experiment
 
-# import gym
 import gym_super_mario_bros
 from nes_py.wrappers import JoypadSpace
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
-# from gym.wrappers import GrayScaleObservation, ResizeObservation, FrameStack
 
 import warnings
 
@@ -62,13 +56,14 @@ else:
     device = torch.device("cpu")
 
 LEARNING_RATE = 0.000001
+STATE_DICT_PATH = 'MP_Model_SD'
+MODEL_PATH = 'MP_Model_1'
 
 class Round:
     def __init__(self):
         self.env = gym_super_mario_bros.make('SuperMarioBros-v3', apply_api_compatibility=True, render_mode='human')
+        # self.env = gym_super_mario_bros.make('SuperMarioBros-v3', apply_api_compatibility=True)
         self.env = JoypadSpace(self.env, SIMPLE_MOVEMENT)
-        # self.env = GrayScaleObservation(self.env, keep_dim=True)
-        # self.env = ResizeObservation(self.env, shape=(84, 84))
         self.obs_4 = np.zeros((4, 84, 84))
         self.rewards = []
         self.lives = 2 # Should be 3 but 2 seems to be the default?
@@ -202,6 +197,7 @@ class Main:
             self.obs[i] = worker.child.recv()
 
         self.model = MarioModel().to(device) # laptop = CPU, PC = GPU
+        self.model.load_state_dict
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate) # updates parameters of model during training
 
@@ -389,6 +385,11 @@ class Main:
             # train the model
             self.train(samples, learning_rate, clip_range)
 
+            # save model every 1000 updates 
+            if (update + 1) % 10 == 0:
+                print("updating")
+                torch.save(self.model.state_dict(), f'path_to_save_model_update_{update+1}.pth')
+
             # write summary info to the writer, and log to the screen
             tracker.save()
             if (update + 1) % 1_000 == 0:
@@ -402,6 +403,38 @@ class Main:
         for worker in self.workers:
             worker.child.send(("close", None))
 
+
+def play(model_path='path_to_save_model_update_10.pth', num_episodes=1):
+    model = MarioModel()
+    model.load_state_dict(torch.load(model_path))
+    model.eval()
+    
+    round_instance = Round()
+    
+    for ep in range(num_episodes):
+        observation = round_instance.reset()
+        done = False
+        
+        while not done:
+            # Make sure to handle observation format and model device properly
+            obs_torch = torch.tensor(observation, dtype=torch.float32).unsqueeze(0)  # Add batch dim
+            with torch.no_grad():
+                pi, _ = model(obs_torch)
+                action_probs = torch.nn.functional.softmax(pi.logits, dim=-1)
+                action = torch.argmax(action_probs, dim=-1).item()  # Select action with max probability
+            
+            observation, reward, done, info = round_instance.fourSteps(action)
+            
+            # Optionally render the environment
+            round_instance.env.render()
+        
+        # Optionally: Logging or any end of episode logic
+        print(f'Episode Reward: {sum(round_instance.rewards)}')
+        
+    round_instance.env.close()
+            
+
+
 # ## Run it
 if __name__ == "__main__":
     experiment.create()
@@ -410,7 +443,5 @@ if __name__ == "__main__":
     m.run_training_loop()
     m.destroy()
 
-
-
-
-
+    # test trained model
+    play('path_to_save_model_update_10.pth', num_episodes=5)
