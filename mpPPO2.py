@@ -234,10 +234,7 @@ class Main:
             for w, worker in enumerate(self.workers):
                 self.obs[w], rewards[w, t], done[w, t], info = worker.child.recv()
                 if info is not None:
-                    tracker.add('reward', info['reward'])
-                    print("info not none")
-                else:
-                    print("info is none")                                                                           
+                    tracker.add('reward', info['reward'])                                                                         
 
             advantages = self._calc_advantages(done, rewards, values)
             samples = {
