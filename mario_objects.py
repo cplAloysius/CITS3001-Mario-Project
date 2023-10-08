@@ -202,12 +202,12 @@ def locate_objects(screen, mario_x, mario_y):
 # used for debugging, shows bounding box of what the agent detects
 def draw_borders(screen, object_locations):
     colours = {
-        "mario": (0, 0, 255),
-        "goomba": (0, 255, 0),
-        "koopa": (255, 255, 0),
-        "ground": (255, 0, 0),
-        "stair": (255, 100, 0),
-        "pipe": (255, 0, 255),
+        "mario": (255, 0, 0),
+        "goomba": (255, 255, 0),
+        "koopa": (255, 0, 255),
+        "ground": (0, 255, 0),
+        "stair": (255, 150, 150),
+        "pipe": (0, 0, 255),
         "brick": (0, 255, 255)
     }
 
