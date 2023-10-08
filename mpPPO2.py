@@ -2,6 +2,7 @@
     follows https://lit.labml.ai/github/vpj/rl_samples/tree/master/ppo.py
     might need to account for other vars from the info dictionary such as "flag"
 '''
+import os
 import multiprocessing
 import multiprocessing.connection
 from typing import Dict, List
@@ -35,10 +36,14 @@ config_dict = {
     'data_path': 'data',
     'experiments_path': 'logs',
     'analytics_path': 'analytics',
-    'web_api': None,
-    'web_api_frequency': None,
-    'web_api_verify_connection': False,
-    'web_api_open_browser': False,
+    'web_api': 'http://localhost:5005/api/v1/track?',
+    'web_api_frequency': 60,
+    'web_api_verify_connection': True,
+    'web_api_open_browser': True,
+    # 'web_api': None,
+    # 'web_api_frequency': None,
+    # 'web_api_verify_connection': False,
+    # 'web_api_open_browser': False,
     'indicators': [
         {
             'class_name': 'Scalar',
@@ -129,6 +134,7 @@ class Worker:
         self.child, parent = multiprocessing.Pipe()
         self.process = multiprocessing.Process(target=worker_process, args=(parent,))
         self.process.start()
+
 
 class MarioModel(nn.Module):
     '''
@@ -230,7 +236,7 @@ class Main:
             for w, worker in enumerate(self.workers):
                 self.obs[w], rewards[w, t], done[w, t], info = worker.child.recv()
                 if info is not None:
-                    tracker.add('reward', info['reward'])                                                                         
+                    tracker.add('reward', info['reward'])
 
             advantages = self._calc_advantages(done, rewards, values)
             samples = {
@@ -387,8 +393,8 @@ class Main:
 
             # save model every 1000 updates 
             if (update + 1) % 10 == 0:
-                print("updating")
-                torch.save(self.model.state_dict(), f'path_to_save_model_update_{update+1}.pth')
+                torch.save(self.model.state_dict(), f'mp_sd_update_{update+1}.pth')
+                torch.save(self.model, f'mp_model_update_{update+1}.pth')
 
             # write summary info to the writer, and log to the screen
             tracker.save()
@@ -404,44 +410,10 @@ class Main:
             worker.child.send(("close", None))
 
 
-def play(model_path='path_to_save_model_update_10.pth', num_episodes=1):
-    model = MarioModel()
-    model.load_state_dict(torch.load(model_path))
-    model.eval()
-    
-    round_instance = Round()
-    
-    for ep in range(num_episodes):
-        observation = round_instance.reset()
-        done = False
-        
-        while not done:
-            # Make sure to handle observation format and model device properly
-            obs_torch = torch.tensor(observation, dtype=torch.float32).unsqueeze(0)  # Add batch dim
-            with torch.no_grad():
-                pi, _ = model(obs_torch)
-                action_probs = torch.nn.functional.softmax(pi.logits, dim=-1)
-                action = torch.argmax(action_probs, dim=-1).item()  # Select action with max probability
-            
-            observation, reward, done, info = round_instance.fourSteps(action)
-            
-            # Optionally render the environment
-            round_instance.env.render()
-        
-        # Optionally: Logging or any end of episode logic
-        print(f'Episode Reward: {sum(round_instance.rewards)}')
-        
-    round_instance.env.close()
-            
-
-
 # ## Run it
 if __name__ == "__main__":
     experiment.create()
     m = Main()
     experiment.start()
-    m.run_training_loop()
+    m.run_pretrained_model('mp_sd_update_2630.pth')
     m.destroy()
-
-    # test trained model
-    play('path_to_save_model_update_10.pth', num_episodes=5)
