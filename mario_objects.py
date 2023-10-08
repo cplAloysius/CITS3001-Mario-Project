@@ -273,7 +273,8 @@ def choose_action(screen):
         mario_world_x = 0
         mario_y = 0
 
-    # to jump over a specific obstacle in stage 2 where there is a gap and a brick wall on the other side of the gap           
+    # to jump over an obstacle where there is a gap and a brick wall
+    #  on the other side of the gap such as the one in stage 2 
     if len(ground_locations) < 4:
         if brick_locations:
             for brick_x, brick_y in brick_locations:
@@ -283,7 +284,8 @@ def choose_action(screen):
     if len(ground_locations) < 2:
         action = 4
     
-    # to run left instead of jumping when there is an enemy and a brick wall above mario (this happens in stage 2)
+    # to run left instead of jumping when there is an enemy and a 
+    # brick wall above mario (this happens in stage 2)
     elif brick_locations and (koopa_locations or goomba_locations):
         for brick_x, brick_y in brick_locations:
             if (mario_y - brick_y) <= 20 and (brick_x - mario_central_x) < 30:
@@ -357,7 +359,6 @@ def choose_action(screen):
                 action = 4
                 break
 
-    #if mario at max height
     if mario_locations: 
         if mario_locations[0][1] < 126:
             action = 3
@@ -375,36 +376,6 @@ def choose_action(screen):
     if mario_x_timer in range(25, 35):
         action = 6
     
-
-
-    #if step_block_positions and not ground_block_positions:
-        #if len(step_block_positions) <= 2:
-            #action = 4
-    
-    #if step_block_positions and not ground_block_positions:
-        #action = 4
-    #if len(step_block_positions) == 6 and len(ground_block_positions) == 0:
-        #action = 3 
-        
-
-    # Get unstuck
-    # if last_ground_block_positions == ground_locations:
-    #     last_ground_block_positions_timer += 1
-    # else:
-    #     last_ground_block_positions_timer = 0
-
-    # if last_ground_block_positions_timer in range(50, 55):
-    #     action = 6
-
-    # if last_ground_block_positions_timer in range(55, 65):
-    #     action = 3
-
-    # if last_ground_block_positions_timer in range(65, 75):
-    #     action = 2
-
-    # if last_ground_block_positions_timer > 75:
-    #     last_ground_block_positions_timer = 0
-
     print(mario_last_x, ":", mario_world_x, ":", mario_x_timer)
 
     last_ground_block_positions = ground_locations
@@ -432,7 +403,7 @@ for step in range(100000):
         action, object_locations = choose_action(screen) 
 
         obs_border = draw_borders(screen.copy(), object_locations)
-        cv.imshow("Debug Observation", cv.cvtColor(obs_border, cv.COLOR_RGB2BGR))
+        cv.imshow("bounding box obs", cv.cvtColor(obs_border, cv.COLOR_RGB2BGR))
         cv.waitKey(1)
 
     screen, reward, terminated, truncated, info = env.step(action)
