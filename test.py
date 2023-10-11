@@ -15,20 +15,22 @@ def main():
 
     JoypadSpace.reset = lambda self, **kwargs: self.env.reset(**kwargs)
 
-    model = PPO.load('train/best_model_1000000 (1).zip')
+    model = PPO.load('1e4_models/1e4/model_1000000.zip')
+
 
     state = env.reset()
-
-    lives = []
-    life = 0
 
     while True:
         action, _ = model.predict(state)
         state, reward, done, info = env.step(action)
-        if info[0]["life"] != life:
-            lives.append(info[0]["life"])
-            life = info[0]["life"]
-            print(lives)
+        # if not done:
+        #     print("not done")
+        #     print(done[0])
+        if done:
+            print("done")
+            print(done)
+        if reward == -15:
+            print("dead")
         env.render()
 
 

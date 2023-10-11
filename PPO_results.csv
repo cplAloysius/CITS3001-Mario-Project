@@ -1,0 +1,2 @@
+learning_rate,n_steps,highest_reward,avg_reward,highest_score,avg_score,total_flags
+1e6,1m,2981.0,2004.9,600,330.0,0

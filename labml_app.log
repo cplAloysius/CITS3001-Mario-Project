@@ -1,0 +1,27 @@
+[36;21m2023-10-08 18:33:49,696 - LabML logger - INFO - starting AnalyticsWriter Thread (analytics.py:139)[0m
+[36;21m2023-10-08 18:33:49,708 - LabML logger - INFO - initializing labml_app (flask_app.py:48)[0m
+[31;21m2023-10-08 18:33:49,732 - LabML logger - ERROR - THIS IS NOT AN ERROR: Server Deployed SHA : 7a2336fa12bdf1e6a13f8e6a0dfa656e876aa86d (flask_app.py:53)[0m
+[36;21m2023-10-08 18:34:52,904 - LabML logger - INFO - starting AnalyticsWriter Thread (analytics.py:139)[0m
+[36;21m2023-10-08 18:34:52,917 - LabML logger - INFO - initializing labml_app (flask_app.py:48)[0m
+[31;21m2023-10-08 18:34:52,934 - LabML logger - ERROR - THIS IS NOT AN ERROR: Server Deployed SHA : 7a2336fa12bdf1e6a13f8e6a0dfa656e876aa86d (flask_app.py:53)[0m
+[36;21m2023-10-08 19:10:26,180 - LabML logger - INFO - starting AnalyticsWriter Thread (analytics.py:139)[0m
+[36;21m2023-10-08 19:10:26,202 - LabML logger - INFO - initializing labml_app (flask_app.py:48)[0m
+[31;21m2023-10-08 19:10:26,216 - LabML logger - ERROR - THIS IS NOT AN ERROR: Server Deployed SHA : 7a2336fa12bdf1e6a13f8e6a0dfa656e876aa86d (flask_app.py:53)[0m
+[36;21m2023-10-08 19:42:39,876 - LabML logger - INFO - starting AnalyticsWriter Thread (analytics.py:139)[0m
+[36;21m2023-10-08 19:42:39,892 - LabML logger - INFO - initializing labml_app (flask_app.py:48)[0m
+[31;21m2023-10-08 19:42:39,907 - LabML logger - ERROR - THIS IS NOT AN ERROR: Server Deployed SHA : 7a2336fa12bdf1e6a13f8e6a0dfa656e876aa86d (flask_app.py:53)[0m
+[36;21m2023-10-08 19:59:36,105 - LabML logger - INFO - starting AnalyticsWriter Thread (analytics.py:139)[0m
+[36;21m2023-10-08 19:59:36,123 - LabML logger - INFO - initializing labml_app (flask_app.py:48)[0m
+[31;21m2023-10-08 19:59:36,141 - LabML logger - ERROR - THIS IS NOT AN ERROR: Server Deployed SHA : 7a2336fa12bdf1e6a13f8e6a0dfa656e876aa86d (flask_app.py:53)[0m
+[36;21m2023-10-08 20:09:50,289 - LabML logger - INFO - starting AnalyticsWriter Thread (analytics.py:139)[0m
+[36;21m2023-10-08 20:09:50,328 - LabML logger - INFO - initializing labml_app (flask_app.py:48)[0m
+[31;21m2023-10-08 20:09:50,343 - LabML logger - ERROR - THIS IS NOT AN ERROR: Server Deployed SHA : 7a2336fa12bdf1e6a13f8e6a0dfa656e876aa86d (flask_app.py:53)[0m
+[36;21m2023-10-08 20:18:26,791 - LabML logger - INFO - starting AnalyticsWriter Thread (analytics.py:139)[0m
+[36;21m2023-10-08 20:18:26,822 - LabML logger - INFO - initializing labml_app (flask_app.py:48)[0m
+[31;21m2023-10-08 20:18:26,839 - LabML logger - ERROR - THIS IS NOT AN ERROR: Server Deployed SHA : 7a2336fa12bdf1e6a13f8e6a0dfa656e876aa86d (flask_app.py:53)[0m
+[36;21m2023-10-08 20:41:41,913 - LabML logger - INFO - starting AnalyticsWriter Thread (analytics.py:139)[0m
+[36;21m2023-10-08 20:41:41,922 - LabML logger - INFO - initializing labml_app (flask_app.py:48)[0m
+[31;21m2023-10-08 20:41:41,939 - LabML logger - ERROR - THIS IS NOT AN ERROR: Server Deployed SHA : 7a2336fa12bdf1e6a13f8e6a0dfa656e876aa86d (flask_app.py:53)[0m
+[36;21m2023-10-08 20:42:13,427 - LabML logger - INFO - starting AnalyticsWriter Thread (analytics.py:139)[0m
+[36;21m2023-10-08 20:42:13,436 - LabML logger - INFO - initializing labml_app (flask_app.py:48)[0m
+[31;21m2023-10-08 20:42:13,450 - LabML logger - ERROR - THIS IS NOT AN ERROR: Server Deployed SHA : 7a2336fa12bdf1e6a13f8e6a0dfa656e876aa86d (flask_app.py:53)[0m

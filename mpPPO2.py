@@ -22,6 +22,7 @@ from torch.distributions import Categorical
 from PIL import Image
 import torch.multiprocessing as mp
 from labml import monit, tracker, logger, experiment
+import logging
 
 import gym_super_mario_bros
 from nes_py.wrappers import JoypadSpace
@@ -76,6 +77,7 @@ class Round:
     def fourSteps(self, action):
         totalRewards = 0
         done = False
+        start_time = time.time()
 
         for i in range(4):
             obs, reward, terminated, truncated, info = self.env.step(action)
@@ -89,6 +91,13 @@ class Round:
         self.rewards.append(reward)
 
         if done:
+            end_time = time.time()  # Record the end time
+            elapsed_time = end_time - start_time  # Calculate elapsed time
+            episode_info =  {
+                "reward": sum(self.rewards),
+                "length": len(self.rewards),
+                "elapsed_time": elapsed_time  # Add elapsed time to info
+            }
             episode_info =  {"reward": sum(self.rewards), "length": len(self.rewards)}
             self.reset()
         else: 

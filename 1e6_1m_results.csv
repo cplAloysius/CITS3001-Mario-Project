@@ -1,0 +1,3 @@
+round,steps,total_rewards,avg_reward_per_step,flag,time,x_pos
+1,1626,2606.0,1.6027061,False,354,1443
+2,1705,2533.0,1.4856305,False,394,1520
