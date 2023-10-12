@@ -17,60 +17,57 @@ def main():
 
     JoypadSpace.reset = lambda self, **kwargs: self.env.reset(**kwargs)
 
-    model = PPO.load('train/best_model_1000000 (1).zip', env=env)
+    model = PPO.load('mario_model_1e6_512/mario_model_1e6_512_8mstep.zip', env=env)
 
     # time, actions, different levels
     
-    rewards = []
-    num_rounds = 2
+    flag_count = 0
+    all_info = []
+    world = 1
+    stage = 1
 
-    for round in range(1, num_rounds+1):
+    while flag_count < 4:
         state = env.reset()
-        steps = 0
-        total_rewards = 0
+        actions = 0
         flag = False
-        x_pos_end = 0
+        
         while True:
 
             action, _ = model.predict(state)
             state, reward, done, info = env.step(action)
 
-            steps += 1
-            total_rewards += reward
+            actions += 1
             flag = info[0]["flag_get"]
+
             if flag:
                 print("GOT FLAG")
-
-            # if reward == -15 or done[0] or flag:
-            if done[0] or flag: 
-                avg_reward = total_rewards/steps
-                r = {
-                    "round" : round,
-                    "steps" : steps,
-                    "total_rewards" : total_rewards[0],
-                    "avg_reward_per_step" : avg_reward[0],  
-                    "flag" : flag,
-                    "time" : info[0]["time"],
-                    "x_pos" : info[0]["x_pos"],
+                flag_count += 1
+                i = {
+                    "time_left" : info[0]["time"],
+                    "num_actions" : actions, 
+                    "world" : world,
+                    "stage" : stage,
+                    "lives_left" : info[0]["life"]
                 }
-                rewards.append(r)
+                all_info.append(i)
+                break
+
+            if done[0]:
                 break
 
             env.render()
     
-    print(f"--{num_rounds} ROUNDS COMPLETE---")
-    for d in rewards:
+    print(f"--COMPLETE---")
+    for d in all_info:
         print(d)
 
-    lr = "1e6"
-    model_steps = "1m"
 
-    filename = f"{lr}_{model_steps}_results.csv"
+    filename = f"time_flag_results.csv"
 
     with open(filename, mode='w', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=["round", "steps", "total_rewards", "avg_reward_per_step", "flag", "time", "x_pos"])
+        writer = csv.DictWriter(file, fieldnames=["time_left", "num_actions", "world", "stage", "lives_left"])
         writer.writeheader()
-        writer.writerows(rewards)
+        writer.writerows(all_info)
 
 
 if __name__ == '__main__':

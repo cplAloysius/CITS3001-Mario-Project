@@ -17,11 +17,11 @@ def main():
 
     JoypadSpace.reset = lambda self, **kwargs: self.env.reset(**kwargs)
 
-    model = PPO.load('train/best_model_1000000 (1).zip', env=env)
+    model = PPO.load("1e4_models/1e4/1e4_12m.zip", env=env)
 
-    lr = "1e6"
-    model_steps = "1m"
-    num_rounds = 10
+    lr = "1e-4"
+    model_steps = "12m"
+    num_rounds = 20
 
     highest_reward = 0
     avg_reward = 0
@@ -81,11 +81,11 @@ def main():
     print(f"--{num_rounds} ROUNDS COMPLETE---")
     print(results)
 
-    filename = "PPO_results.csv"
+    filename = f"{lr}_PPO_results.csv"
 
-    with open(filename, mode='w', newline='') as file:
+    with open(filename, mode='a', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=["learning_rate", "n_steps", "highest_reward", "avg_reward", "highest_score", "avg_score", "total_flags"])
-        writer.writeheader()
+        # writer.writeheader()
         writer.writerow(results)
 
     print("---COMPLETE---")
@@ -93,3 +93,19 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+'''
+models = [
+        "1e4_models/1e4/1e4_1m.zip", 
+        "1e4_models/1e4/1e4_4m.zip",
+        "1e4_models/1e4/1e4_8m.zip",
+        "1e4_models/1e4/1e4_12m.zip",
+        "1e4_models/1e4/1e4_16m.zip",
+        "train/best_model_1000000 (1).zip",
+        "mario_model_1e6_512/mario_model_1e6_512_4mstep.zip",
+        "mario_model_1e6_512/mario_model_1e6_512_8mstep.zip",
+        "mario_model_1e6_512/mario_model_1e6_512_12mstep.zip",
+        "mario_model_1e6_512/mario_model_1e6_512_16mstep.zip"
+    ]
+'''
