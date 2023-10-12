@@ -39,8 +39,10 @@ r1 = range(len(n_steps1))
 r2 = [x + barWidth for x in r1]
 
 # Create bars
-plt.bar(r1, highest_scores1, width = barWidth, color = 'blue', edgecolor = 'grey', label='1e-6 Learning Rate')
-plt.bar(r2, highest_scores2, width = barWidth, color = 'cyan', edgecolor = 'grey', label='1e-4 Learning Rate')
+# plt.bar(r1, highest_scores1, width = barWidth, color = 'blue', edgecolor = 'grey', label='1e-6 Learning Rate')
+# plt.bar(r2, highest_scores2, width = barWidth, color = 'cyan', edgecolor = 'grey', label='1e-4 Learning Rate')
+plt.bar(r1, highest_scores1, width = barWidth, label='1e-6 Learning Rate')
+plt.bar(r2, highest_scores2, width = barWidth, label='1e-4 Learning Rate')
 
 # Adding annotations for each bar
 for i, txt in enumerate(highest_scores1):
