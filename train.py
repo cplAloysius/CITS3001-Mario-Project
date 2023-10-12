@@ -59,8 +59,7 @@ def main():
     # model = PPO('CnnPolicy', env, verbose=1, tensorboard_log=LOG_DIR,
     #             learning_rate=0.000001, n_steps=512)
     model = PPO('CnnPolicy', env, verbose=1, tensorboard_log=LOG_DIR)
-    p = model.policy
-    print(p)
+
     #load a previously trained model for further training
     # MODEL_DIR = 'train/model_1000000'
     # MODEL_LOG_DIR = 'logs/PPO_2'
