@@ -26,9 +26,10 @@ def main():
     world = 1
     stage = 1
 
-    while flag_count < 4:
+    while flag_count < 2:
         state = env.reset()
         actions = 0
+        total_reward = 0
         flag = False
         
         while True:
@@ -37,6 +38,7 @@ def main():
             state, reward, done, info = env.step(action)
 
             actions += 1
+            total_reward += reward[0]
             flag = info[0]["flag_get"]
 
             if flag:
@@ -47,7 +49,9 @@ def main():
                     "num_actions" : actions, 
                     "world" : world,
                     "stage" : stage,
-                    "lives_left" : info[0]["life"]
+                    "lives_left" : info[0]["life"],
+                    "reward" : total_reward,
+                    "score" : info[0]["score"]
                 }
                 all_info.append(i)
                 break
@@ -62,10 +66,10 @@ def main():
         print(d)
 
 
-    filename = f"time_flag_results.csv"
+    filename = f"time_flag_results2.csv"
 
     with open(filename, mode='w', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=["time_left", "num_actions", "world", "stage", "lives_left"])
+        writer = csv.DictWriter(file, fieldnames=["time_left", "num_actions", "world", "stage", "lives_left", "reward", "score"])
         writer.writeheader()
         writer.writerows(all_info)
 
