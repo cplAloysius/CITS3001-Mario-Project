@@ -9,7 +9,7 @@ from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv
 
 def main():
     env = gym_super_mario_bros.make(
-        'SuperMarioBros-4-1-v0', apply_api_compatibility=True, render_mode='human')
+        'SuperMarioBros-8-4-v0', apply_api_compatibility=True, render_mode='human')
     env = JoypadSpace(env, SIMPLE_MOVEMENT)
     env = GrayScaleObservation(env, keep_dim=True)
     env = DummyVecEnv([lambda:env])
@@ -22,9 +22,15 @@ def main():
     # time, actions, different levels
     
     rounds = 5
-    all_info = []
-    world = 4
-    stage = 1
+    world = 8
+    stage = 4
+
+    avg_time = 0
+    avg_num_actions = 0
+    avg_reward = 0
+    avg_score = 0
+    avg_x_pos = 0
+    avg_flag_count = 0
 
 
     for r in range(1, rounds+1):
@@ -42,37 +48,43 @@ def main():
             actions += 1
             total_reward += reward[0]
             flag = info[0]["flag_get"]
+
             if flag:
                 flag_count += 1
                 print("GOT FLAG")
 
             if done[0]:
-                i = {
-                    "time_left" : info[0]["time"],
-                    "num_actions" : actions, 
-                    "world" : world,
-                    "stage" : stage,
-                    "reward" : total_reward,
-                    "score" : info[0]["score"],
-                    "x_pos" : info[0]["x_pos"]
-                }
-                all_info.append(i)
+                avg_time += info[0]["time"]
+                avg_num_actions += actions
+                avg_reward += total_reward
+                avg_score += info[0]["score"]
+                avg_x_pos += info[0]["x_pos"]
+                avg_flag_count += flag_count
                 break
 
             env.render()
     
-    print(f"--COMPLETE---")
-    for d in all_info:
-        print(d)
+    results = {
+        "world" : world,
+        "stage" : stage,
+        "avg_time" : avg_time/rounds,
+        "avg_num_actions" : avg_num_actions/rounds,
+        "avg_reward" : avg_reward/rounds,
+        "avg_score" : avg_score/rounds,
+        "avg_x_pos" : avg_x_pos/rounds,
+        "avg_flag_count" : avg_flag_count/rounds
+    }
 
+
+    print(f"--COMPLETE---")
+    print(results)
 
     filename = f"compare_world_{world}_results.csv"
 
     with open(filename, mode='a', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=["time_left", "num_actions", "world", "stage", "reward", "score", "x_pos"])
+        writer = csv.DictWriter(file, fieldnames=["world", "stage", "avg_time", "avg_num_actions", "avg_reward", "avg_score", "avg_x_pos", "avg_flag_count",])
         # writer.writeheader()
-        writer.writerows(all_info)
-
+        writer.writerow(results)
 
 if __name__ == '__main__':
     main()
