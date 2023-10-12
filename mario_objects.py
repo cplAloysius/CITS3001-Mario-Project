@@ -399,8 +399,9 @@ env.reset()
 
 remaining_time = 0
 action_count = 0
+total_reward = 0
 
-for step in range(100000):
+for step in range(10000):
     if screen is None:
         action = env.action_space.sample()
         object_locations = {}
@@ -414,25 +415,28 @@ for step in range(100000):
 
     action_count+= 1
     screen, reward, terminated, truncated, info = env.step(action)
+    total_reward += reward
 
     if info["flag_get"]:
         remaining_time = info["time"]
-        print("Reward: ", reward)
+        print("Reward: ", total_reward)
         print("Score: ", info["score"])
         print("Time remaining: ", remaining_time)
         print("No. of actions: ", action_count)
         print()
+        total_reward = 0
         action_count = 0
 
     if terminated or truncated:
         remaining_time = info["time"]
         print("World {}, stage {}".format(info["world"], info["stage"]))
         print("Mario X position: ", info["x_pos"])
-        print("Reward: ", reward)
+        print("Reward: ", total_reward)
         print("Score: ", info["score"])
         print("Time remaining: ", remaining_time)
         print("No. of actions: ", action_count)
         print()
         action_count = 0
+        total_reward = 0
         screen, info = env.reset()
 env.close()
