@@ -118,12 +118,13 @@ def get_thresh(info):
     block_thresh = BLOCK_THRESHOLD
     pipe_thresh = PIPE_THRESHOLD
     
-    if info["world"] == 1 and info["stage"] == 2:
-        mario_thresh = MARIO_THRESHOLD2
-        goomba_thresh = GOOMBA_THRESHOLD2
-        koopa_thresh = KOOPA_THRESHOLD2
-        block_thresh = BLOCK_THRESHOLD2
-        pipe_thresh = PIPE_THRESHOLD2
+    if info:
+        if info["world"] == 1 and info["stage"] == 2:
+            mario_thresh = MARIO_THRESHOLD2
+            goomba_thresh = GOOMBA_THRESHOLD2
+            koopa_thresh = KOOPA_THRESHOLD2
+            block_thresh = BLOCK_THRESHOLD2
+            pipe_thresh = PIPE_THRESHOLD2
     
     return mario_thresh, goomba_thresh, koopa_thresh, block_thresh, pipe_thresh
 
@@ -169,8 +170,9 @@ def locate_objects(screen, mario_x, mario_y):
     mario_thresh, goomba_thresh, koopa_thresh, block_thresh, pipe_thresh = get_thresh(info)
     screen = cv.cvtColor(screen, cv.COLOR_RGB2BGR)
 
-    if info["world"] == 1 and info["stage"] == 2:
-        screen = black_sky(screen)
+    if info:
+        if info["world"] == 1 and info["stage"] == 2:
+            screen = black_sky(screen)
 
     screen = cv.cvtColor(screen, cv.COLOR_BGR2GRAY)
 
@@ -376,7 +378,7 @@ def choose_action(screen):
     if mario_x_timer in range(25, 35):
         action = 6
     
-    print(mario_last_x, ":", mario_world_x, ":", mario_x_timer)
+    #print(mario_last_x, ":", mario_world_x, ":", mario_x_timer)
 
     last_ground_block_positions = ground_locations
     mario_last_x = mario_world_x
@@ -387,13 +389,16 @@ def choose_action(screen):
 
 ################################################################################
 
-env = gym.make("SuperMarioBros-v0", apply_api_compatibility=True, render_mode="human")
+env = gym.make("SuperMarioBros-8-4-v0", apply_api_compatibility=True, render_mode="human")
 env = JoypadSpace(env, SIMPLE_MOVEMENT)
 
 screen = None
 done = True
 
 env.reset()
+
+remaining_time = 0
+action_count = 0
 
 for step in range(100000):
     if screen is None:
@@ -405,8 +410,29 @@ for step in range(100000):
         obs_border = draw_borders(screen.copy(), object_locations)
         cv.imshow("bounding box obs", cv.cvtColor(obs_border, cv.COLOR_RGB2BGR))
         cv.waitKey(1)
+    
 
+    action_count+= 1
     screen, reward, terminated, truncated, info = env.step(action)
+
+    if info["flag_get"]:
+        remaining_time = info["time"]
+        print("Reward: ", reward)
+        print("Score: ", info["score"])
+        print("Time remaining: ", remaining_time)
+        print("No. of actions: ", action_count)
+        print()
+        action_count = 0
+
     if terminated or truncated:
+        remaining_time = info["time"]
+        print("World {}, stage {}".format(info["world"], info["stage"]))
+        print("Mario X position: ", info["x_pos"])
+        print("Reward: ", reward)
+        print("Score: ", info["score"])
+        print("Time remaining: ", remaining_time)
+        print("No. of actions: ", action_count)
+        print()
+        action_count = 0
         screen, info = env.reset()
 env.close()
