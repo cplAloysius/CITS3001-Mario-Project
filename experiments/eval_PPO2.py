@@ -17,10 +17,10 @@ def main():
 
     JoypadSpace.reset = lambda self, **kwargs: self.env.reset(**kwargs)
 
-    model = PPO.load("1e4_models/1e4/1e4_12m.zip", env=env)
+    model = PPO.load("1e4_models/1e4/1e4_4m.zip", env=env)
 
     lr = "1e-4"
-    model_steps = "12m"
+    model_steps = "4m"
     num_rounds = 20
 
     highest_reward = 0
@@ -81,14 +81,14 @@ def main():
     print(f"--{num_rounds} ROUNDS COMPLETE---")
     print(results)
 
-    filename = f"{lr}_PPO_results.csv"
+    # filename = f"{lr}_PPO_results.csv"
 
-    with open(filename, mode='a', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=["learning_rate", "n_steps", "highest_reward", "avg_reward", "highest_score", "avg_score", "total_flags"])
-        # writer.writeheader()
-        writer.writerow(results)
+    # with open(filename, mode='a', newline='') as file:
+    #     writer = csv.DictWriter(file, fieldnames=["learning_rate", "n_steps", "highest_reward", "avg_reward", "highest_score", "avg_score", "total_flags"])
+    #     # writer.writeheader()
+    #     writer.writerow(results)
 
-    print("---COMPLETE---")
+    # print("---COMPLETE---")
 
 
 if __name__ == '__main__':

@@ -29,26 +29,34 @@ with open(filename2, mode='r', newline='') as file:
         highest_scores2.append(float(row["highest_score"]))
 
 # Plotting
-plt.figure(figsize=(10, 6))
-line1, = plt.plot(n_steps1, highest_scores1, marker='o', label='1e-6 Learning Rate')
-line2, = plt.plot(n_steps2, highest_scores2, marker='o', label='1e-4 Learning Rate')
+plt.figure(figsize=(10, 8))
 
-# Adding annotations for each point
+# Bar width
+barWidth = 0.3
+
+# Set position of bar on X axis
+r1 = range(len(n_steps1))
+r2 = [x + barWidth for x in r1]
+
+# Create bars
+plt.bar(r1, highest_scores1, width = barWidth, color = 'blue', edgecolor = 'grey', label='1e-6 Learning Rate')
+plt.bar(r2, highest_scores2, width = barWidth, color = 'cyan', edgecolor = 'grey', label='1e-4 Learning Rate')
+
+# Adding annotations for each bar
 for i, txt in enumerate(highest_scores1):
-    plt.annotate(f"{txt}", (n_steps1[i], highest_scores1[i]), textcoords="offset points", xytext=(0,10), ha='center')
+    plt.annotate(f"{txt}", (r1[i], highest_scores1[i]), textcoords="offset points", xytext=(0,10), ha='center')
 for i, txt in enumerate(highest_scores2):
-    plt.annotate(f"{txt}", (n_steps2[i], highest_scores2[i]), textcoords="offset points", xytext=(0,10), ha='center')
+    plt.annotate(f"{txt}", (r2[i], highest_scores2[i]), textcoords="offset points", xytext=(0,10), ha='center')
 
 # Adding title and labels
-plt.title("Highest Score for Each n_steps")
-plt.xlabel("n_steps")
-plt.ylabel("Highest Score")
+plt.title("Highest Score for Each n_steps", fontweight='bold')
+plt.xlabel("n_steps", fontweight='bold')
+plt.ylabel("Highest Score", fontweight='bold')
+plt.xticks([r + barWidth/2 for r in range(len(n_steps1))], n_steps1)  # Label x-axis indices with your n_steps values
 
 # Adding Legend
-plt.legend(handles=[line1, line2])
+plt.legend()
 
 # Displaying the plot
-plt.grid(True)
-plt.xticks(rotation=45)
 plt.tight_layout()
 plt.show()
