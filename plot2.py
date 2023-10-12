@@ -2,10 +2,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import textwrap
 
-labels = ('x pos', 'total reward', 'score', 'no. of actions', 'time remaining (higher is better)')
+labels = ('x pos', 'total reward', 'score', 'no. of actions')
 agents = {
-    'Rule Based': (439.875, 371.625, 25, 280, 349),
-    'PPO': (456.125, 413.95, 105, 209.325, 352.25)
+    'Rule Based': (439.875, 371.625, 25, 280),
+    'PPO': (456.125, 413.95, 105, 209.325)
 }
 
 x = np.arange(len(labels))

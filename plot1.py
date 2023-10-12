@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import textwrap
 
-labels = ('time remaining', 'no. of actions', 'score', 'total reward')
+labels = ('time remaining (higher is better)', 'no. of actions', 'score', 'total reward')
 agents = {
     'Rule Based': (297, 2062, 300, 3018),
     'PPO': (343, 1823, 700, 3431)
@@ -19,7 +20,9 @@ for i, agent in enumerate(agents.keys()):
 ax.set_xlabel('Metrics')
 ax.set_ylabel('Values')
 ax.set_title('Rule Based vs PPO in World 1 Stage 1')
-ax.set_xticks(x + bar_width * (len(agents) - 1) / 2, labels)
+label_wrap = [textwrap.fill(label, 12) for label in labels]
+ax.set_xticks(x + bar_width * (len(agents) - 1) / 2)
+ax.set_xticklabels(label_wrap) 
 ax.legend()
 
 plt.show()
