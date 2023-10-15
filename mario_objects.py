@@ -9,19 +9,19 @@ import numpy as np
 SCREEN_HEIGHT   = 240
 SCREEN_WIDTH    = 256
 
-# stage 1
+# stage 1 thresholds
 MARIO_THRESHOLD = 0.8
 GOOMBA_THRESHOLD = 0.7
 KOOPA_THRESHOLD = 0.9
 BLOCK_THRESHOLD = 0.9
 PIPE_THRESHOLD = 0.9
 
-#stage 2
-MARIO_THRESHOLD2 = 0.6
+#stage 2 thresholds
+MARIO_THRESHOLD2 = 0.54
 GOOMBA_THRESHOLD2 = 0.7
 KOOPA_THRESHOLD2 = 0.9
 BLOCK_THRESHOLD2 = 0.8
-PIPE_THRESHOLD2 = 0.9
+PIPE_THRESHOLD2 = 0.7
 
 
 ################################################################################
@@ -37,28 +37,6 @@ mario_last_x = 0
 mario_last_central_x = 0
 mario_last_y = 0
 mario_x_timer = 0
-
-# load templates in grayscale format
-# mario_template = [cv.imread('marioA.png', cv.IMREAD_GRAYSCALE), 
-#                    cv.imread('marioB.png', cv.IMREAD_GRAYSCALE),
-#                    cv.imread('marioC.png', cv.IMREAD_GRAYSCALE),
-#                    cv.imread('marioD.png', cv.IMREAD_GRAYSCALE),
-#                    cv.imread('marioE.png', cv.IMREAD_GRAYSCALE),
-#                    cv.imread('marioF.png', cv.IMREAD_GRAYSCALE),
-#                    cv.imread('marioG.png', cv.IMREAD_GRAYSCALE)]
-
-# goomba_template = [cv.imread('goomba.png', cv.IMREAD_GRAYSCALE)]
-
-# koopa_template = [cv.imread('koopaA.png', cv.IMREAD_GRAYSCALE),
-#                    cv.imread('koopaB.png', cv.IMREAD_GRAYSCALE),
-#                    cv.imread('koopaC.png', cv.IMREAD_GRAYSCALE),
-#                    cv.imread('koopaD.png', cv.IMREAD_GRAYSCALE)]
- 
-# ground_template = [cv.imread('block2.png', cv.IMREAD_GRAYSCALE)]
-
-# stair_template = [cv.imread('block4.png', cv.IMREAD_GRAYSCALE)]
-
-# pipe_template = [cv.imread('pipe_upper_section.png', cv.IMREAD_GRAYSCALE)]
 
 #load templates in BGR format
 mario_template = [cv.imread('templates/marioA.png', cv.IMREAD_COLOR), 
@@ -82,6 +60,9 @@ stair_template = [cv.imread('templates/block4.png', cv.IMREAD_COLOR)]
 
 pipe_template = [cv.imread('templates/pipe_upper_section.png', cv.IMREAD_COLOR)]
 
+brick_template = [cv.imread('templates/block1.png', cv.IMREAD_COLOR)]
+
+# create masks to ignore sky when matching using the BGR templates
 def sky_mask2(templates):
     masks = []
     for template in templates:
@@ -92,14 +73,15 @@ def sky_mask2(templates):
         masks.append(mask)
     return masks
 
-# mask the sky using BGR templates
-mario_masks = sky_mask2(mario_template)
-goomba_masks = sky_mask2(goomba_template)
-koopa_masks = sky_mask2(koopa_template)
-ground_masks = sky_mask2(ground_template)
-stair_masks = sky_mask2(stair_template)
-pipe_masks = sky_mask2(pipe_template)
+# flip templates because mario and some enemies sometimes face in opposite directions
+def flip_templates(templates):
+    flipped_templates = []
+    for template in templates:
+        flipped_template = cv.flip(template, 1)
+        flipped_templates.append(flipped_template)
+    return flipped_templates
 
+# convert BGR to gray for easier matching in different stages
 def to_gray(templates):
     new_templates = []
     for template in templates:
@@ -107,16 +89,28 @@ def to_gray(templates):
         new_templates.append(new_template)
     return new_templates
 
+mario_template += flip_templates(mario_template)
+
+mario_masks = sky_mask2(mario_template)
+goomba_masks = sky_mask2(goomba_template)
+koopa_masks = sky_mask2(koopa_template)
+ground_masks = sky_mask2(ground_template)
+stair_masks = sky_mask2(stair_template)
+pipe_masks = sky_mask2(pipe_template)
+brick_masks = sky_mask2(brick_template)
+
 mario_template = to_gray(mario_template)
 goomba_template = to_gray(goomba_template)
 koopa_template = to_gray(koopa_template)
 ground_template = to_gray(ground_template)
 stair_template = to_gray(stair_template)
 pipe_template = to_gray(pipe_template)
+brick_template = to_gray(brick_template)
 
 ################################################################################
 # LOCATING OBJECTS
 
+# selecting appropriate thresholds to use for different stages
 def get_thresh(info):
     mario_thresh = MARIO_THRESHOLD
     goomba_thresh = GOOMBA_THRESHOLD
@@ -124,15 +118,17 @@ def get_thresh(info):
     block_thresh = BLOCK_THRESHOLD
     pipe_thresh = PIPE_THRESHOLD
     
-    if info["world"] == 1 and info["stage"] == 2:
-        mario_thresh = MARIO_THRESHOLD2
-        goomba_thresh = GOOMBA_THRESHOLD2
-        koopa_thresh = KOOPA_THRESHOLD2
-        block_thresh = BLOCK_THRESHOLD2
-        pipe_thresh = PIPE_THRESHOLD2
+    if info:
+        if info["world"] == 1 and info["stage"] == 2:
+            mario_thresh = MARIO_THRESHOLD2
+            goomba_thresh = GOOMBA_THRESHOLD2
+            koopa_thresh = KOOPA_THRESHOLD2
+            block_thresh = BLOCK_THRESHOLD2
+            pipe_thresh = PIPE_THRESHOLD2
     
     return mario_thresh, goomba_thresh, koopa_thresh, block_thresh, pipe_thresh
 
+# converts all black pixels on screen to blue because I found that its hard to match with stage 2's black background
 def black_sky(screen):
     black_mask = cv.inRange(screen, (0,0,0), (0,0,0))
     replacement_colour = (252, 136, 104)
@@ -151,7 +147,7 @@ def _locate_objects(screen, templates, threshold, subview=None, masks=None, stop
     
     for template in templates:
         if screen.shape[0] < template.shape[0] or screen.shape[1] < template.shape[1]:
-            continue  # Skip this template
+            continue
         elif masks[i] is not None and (masks[i].shape[0] != template.shape[0] or masks[i].shape[1] != template.shape[1]):
             continue
         result = cv.matchTemplate(screen, template, cv.TM_CCOEFF_NORMED, mask=masks[i])
@@ -174,8 +170,9 @@ def locate_objects(screen, mario_x, mario_y):
     mario_thresh, goomba_thresh, koopa_thresh, block_thresh, pipe_thresh = get_thresh(info)
     screen = cv.cvtColor(screen, cv.COLOR_RGB2BGR)
 
-    if info["world"] == 1 and info["stage"] == 2:
-        screen = black_sky(screen)
+    if info:
+        if info["world"] == 1 and info["stage"] == 2:
+            screen = black_sky(screen)
 
     screen = cv.cvtColor(screen, cv.COLOR_BGR2GRAY)
 
@@ -192,24 +189,28 @@ def locate_objects(screen, mario_x, mario_y):
         y_start, y_end = 120, screen.shape[0]
 
     subview = (x_start, x_end, y_start, y_end)
+    subview2 = (x_start, x_end+20, y_start-20, y_end)
 
     return {
         "mario": mario_positions,
-        "goomba": _locate_objects(screen, goomba_template, goomba_thresh, subview, goomba_masks),
+        "goomba": _locate_objects(screen, goomba_template, goomba_thresh, subview2, goomba_masks),
         "koopa": _locate_objects(screen, koopa_template, koopa_thresh, subview, koopa_masks),
         "ground": _locate_objects(screen, ground_template, block_thresh, subview, ground_masks),
         "stair": _locate_objects(screen, stair_template, block_thresh, subview, stair_masks),
-        "pipe": _locate_objects(screen, pipe_template, pipe_thresh, subview, pipe_masks)
+        "pipe": _locate_objects(screen, pipe_template, pipe_thresh, subview, pipe_masks),
+        "brick": _locate_objects(screen, brick_template, block_thresh, subview, brick_masks),
     }
 
+# used for debugging, shows bounding box of what the agent detects
 def draw_borders(screen, object_locations):
     colours = {
-        "mario": (0, 0, 255),
-        "goomba": (0, 255, 0),
-        "koopa": (255, 255, 0),
-        "ground": (255, 0, 0),
-        "stair": (255, 0, 0),
-        "pipe": (255, 0, 255),
+        "mario": (255, 0, 0),
+        "goomba": (255, 255, 0),
+        "koopa": (255, 0, 255),
+        "ground": (0, 255, 0),
+        "stair": (255, 150, 150),
+        "pipe": (0, 0, 255),
+        "brick": (0, 255, 255)
     }
 
     for obj_type, positions in object_locations.items():
@@ -228,6 +229,8 @@ def draw_borders(screen, object_locations):
                 template = stair_template[0]
             elif template_name == "pipe_template":
                 template = pipe_template[0]
+            elif template_name == "brick_template":
+                template = brick_template[0]
             else:
                 continue
 
@@ -241,10 +244,11 @@ def draw_borders(screen, object_locations):
 # GETTING INFORMATION AND CHOOSING AN ACTION
 
 def choose_action(screen):
-    global mario_last_central_x
-    global mario_last_x
-    global mario_last_y
-    global mario_x_timer
+    global mario_last_central_x # x position of mario on screen taking into account the width of mario's body
+    global mario_last_x # previous x position of mario in the world
+    global mario_last_y # previous y position of mario
+    global mario_x_timer # keeps track of how long mario stays in the same spot in the world
+
     global last_ground_block_positions
     global last_ground_block_positions_timer
     
@@ -255,8 +259,9 @@ def choose_action(screen):
     ground_locations = object_locations["ground"]
     stair_locations = object_locations["stair"]
     pipe_locations = object_locations["pipe"]
+    brick_locations = object_locations["brick"]
 
-    action = 1
+    action = 1 # default action ["right"]
 
     if mario_locations:
         mario_central_x = mario_locations[0][0] + mario_template[0].shape[1] // 2
@@ -270,14 +275,72 @@ def choose_action(screen):
         mario_world_x = 0
         mario_y = 0
 
-    if goomba_locations:
-        for goomba_location in goomba_locations:
-            distance = goomba_location[0] - mario_central_x
+    # to jump over an obstacle where there is a gap and a brick wall
+    #  on the other side of the gap such as the one in stage 2 
+    if len(ground_locations) < 4:
+        if brick_locations:
+            for brick_x, brick_y in brick_locations:
+                if (brick_x - mario_central_x) in range (20, 40):
+                    action = 4
+
+    if len(ground_locations) < 2:
+        action = 4
+    
+    # to run left instead of jumping when there is an enemy and a 
+    # brick wall above mario (this happens in stage 2)
+    elif brick_locations and (koopa_locations or goomba_locations):
+        for brick_x, brick_y in brick_locations:
+            if (mario_y - brick_y) <= 20 and (brick_x - mario_central_x) < 30:
+                if goomba_locations:
+                    for goomba_location in goomba_locations:
+                        goomba_distance = goomba_location[0] - mario_central_x
+                        if goomba_distance in range(0, 100):
+                            action = 6
+                            break
+                if koopa_locations:
+                    for koopa_location in koopa_locations:
+                        koopa_distance = koopa_location[0] - mario_central_x
+                        if koopa_distance in range(0, 100):
+                            action = 6
+                            break
+            else:
+                if goomba_locations:
+                    for goomba_x, goomba_y in goomba_locations:
+                        distance = goomba_x - mario_central_x
+                        goomba_higher = mario_y - goomba_y
+                        mario_higher = goomba_y - mario_y
+                        if goomba_higher in range (60, 80):
+                            action = 4
+                            break
+                        if mario_higher > 50 and distance <= 40:
+                            action = 4
+                        if 0 < distance <= 25:
+                            action = 4
+                            break
+                if koopa_locations:
+                    for koopa_location in koopa_locations:
+                        koopa_distance = koopa_location[0] - mario_central_x
+                        if 0 < koopa_distance <= 25:
+                            action = 4
+                            break
+
+    elif goomba_locations:
+        for goomba_x, goomba_y in goomba_locations:
+            distance = goomba_x - mario_central_x
+            goomba_higher = mario_y - goomba_y
+            mario_higher = goomba_y - mario_y
+            
+            if goomba_higher > 50:
+                action = 6
+                break
+            if mario_higher > 50 and distance <= 40:
+                action = 4
+
             if 0 < distance <= 20:
                 action = 4
                 break
     
-    if koopa_locations:
+    elif koopa_locations:
         for koopa_location in koopa_locations:
             distance = koopa_location[0] - mario_central_x
             if 0 < distance <= 25:
@@ -297,11 +360,7 @@ def choose_action(screen):
             if distance <= 20:
                 action = 4
                 break
-    
-    if len(ground_locations) < 4:
-        action = 4
 
-    #if mario at max height
     if mario_locations: 
         if mario_locations[0][1] < 126:
             action = 3
@@ -319,41 +378,12 @@ def choose_action(screen):
     if mario_x_timer in range(25, 35):
         action = 6
     
-
-
-    #if step_block_positions and not ground_block_positions:
-        #if len(step_block_positions) <= 2:
-            #action = 4
-    
-    #if step_block_positions and not ground_block_positions:
-        #action = 4
-    #if len(step_block_positions) == 6 and len(ground_block_positions) == 0:
-        #action = 3 
-        
-
-    # Get unstuck
-    # if last_ground_block_positions == ground_locations:
-    #     last_ground_block_positions_timer += 1
-    # else:
-    #     last_ground_block_positions_timer = 0
-
-    # if last_ground_block_positions_timer in range(50, 55):
-    #     action = 6
-
-    # if last_ground_block_positions_timer in range(55, 65):
-    #     action = 3
-
-    # if last_ground_block_positions_timer in range(65, 75):
-    #     action = 2
-
-    # if last_ground_block_positions_timer > 75:
-    #     last_ground_block_positions_timer = 0
-
-    print(mario_last_x, ":", mario_world_x, ":", mario_x_timer)
+    #print(mario_last_x, ":", mario_world_x, ":", mario_x_timer)
 
     last_ground_block_positions = ground_locations
     mario_last_x = mario_world_x
     mario_last_y = mario_y
+    mario_last_central_x = mario_central_x
 
     return action, object_locations
 
@@ -367,7 +397,11 @@ done = True
 
 env.reset()
 
-for step in range(100000):
+remaining_time = 0
+action_count = 0
+total_reward = 0
+
+for step in range(10000):
     if screen is None:
         action = env.action_space.sample()
         object_locations = {}
@@ -375,10 +409,34 @@ for step in range(100000):
         action, object_locations = choose_action(screen) 
 
         obs_border = draw_borders(screen.copy(), object_locations)
-        cv.imshow("Debug Observation", cv.cvtColor(obs_border, cv.COLOR_RGB2BGR))
+        cv.imshow("bounding box obs", cv.cvtColor(obs_border, cv.COLOR_RGB2BGR))
         cv.waitKey(1)
+    
 
+    action_count+= 1
     screen, reward, terminated, truncated, info = env.step(action)
+    total_reward += reward
+
+    if info["flag_get"]:
+        remaining_time = info["time"]
+        print("Reward: ", total_reward)
+        print("Score: ", info["score"])
+        print("Time remaining: ", remaining_time)
+        print("No. of actions: ", action_count)
+        print()
+        total_reward = 0
+        action_count = 0
+
     if terminated or truncated:
+        remaining_time = info["time"]
+        print("World {}, stage {}".format(info["world"], info["stage"]))
+        print("Mario X position: ", info["x_pos"])
+        print("Reward: ", total_reward)
+        print("Score: ", info["score"])
+        print("Time remaining: ", remaining_time)
+        print("No. of actions: ", action_count)
+        print()
+        action_count = 0
+        total_reward = 0
         screen, info = env.reset()
 env.close()
