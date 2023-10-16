@@ -8,7 +8,10 @@ from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv
 from stable_baselines3.common.callbacks import BaseCallback
 from matplotlib import pyplot as plt
 
+# FOLLOWS A TUTORIAL BY NICHOLAS RENOTTE
+# TUTORIAL LINK : https://www.youtube.com/watch?v=2eeYqJ0uBKE&ab_channel=NicholasRenotte
 
+# Callback to save model every 1 million steps
 class TrainAndLoggingCallback(BaseCallback):
 
     def __init__(self, check_freq, save_path, verbose=1):
@@ -43,12 +46,6 @@ def main():
     # state = env.reset()
     # state, reward, done, info = env.step([5])
 
-    # plt.figure(figsize=(10, 10))
-    # for idx in range(state.shape[3]):
-    #     plt.subplot(1, 4, idx+1)
-    #     plt.imshow(state[0][:, :, idx])
-    # plt.show()
-
     CHECKPOINT_DIR = 'train'
     LOG_DIR = 'logs'
 
@@ -56,9 +53,8 @@ def main():
         check_freq=100000, save_path=CHECKPOINT_DIR)
 
     #train from scratch
-    # model = PPO('CnnPolicy', env, verbose=1, tensorboard_log=LOG_DIR,
-    #             learning_rate=0.000001, n_steps=512)
-    model = PPO('CnnPolicy', env, verbose=1, tensorboard_log=LOG_DIR)
+    model = PPO('CnnPolicy', env, verbose=1, tensorboard_log=LOG_DIR,
+                learning_rate=0.000001)
 
     #load a previously trained model for further training
     # MODEL_DIR = 'train/model_1000000'

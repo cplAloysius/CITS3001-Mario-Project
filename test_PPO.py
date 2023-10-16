@@ -23,14 +23,6 @@ def main():
     while True:
         action, _ = model.predict(state)
         state, reward, done, info = env.step(action)
-        # if not done:
-        #     print("not done")
-        #     print(done[0])
-        if done:
-            print("done")
-            print(done)
-        if reward == -15:
-            print("dead")
         env.render()
 
 
