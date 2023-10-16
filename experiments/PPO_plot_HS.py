@@ -41,8 +41,8 @@ r2 = [x + barWidth for x in r1]
 # Create bars
 # plt.bar(r1, highest_scores1, width = barWidth, color = 'blue', edgecolor = 'grey', label='1e-6 Learning Rate')
 # plt.bar(r2, highest_scores2, width = barWidth, color = 'cyan', edgecolor = 'grey', label='1e-4 Learning Rate')
-plt.bar(r1, highest_scores1, width = barWidth, label='1e-6 Learning Rate')
-plt.bar(r2, highest_scores2, width = barWidth, label='1e-4 Learning Rate')
+plt.bar(r1, highest_scores1, width = barWidth, edgecolor = 'grey', label='1e-6 Learning Rate')
+plt.bar(r2, highest_scores2, width = barWidth, edgecolor = 'grey', label='1e-4 Learning Rate')
 
 # Adding annotations for each bar
 for i, txt in enumerate(highest_scores1):
@@ -51,8 +51,8 @@ for i, txt in enumerate(highest_scores2):
     plt.annotate(f"{txt}", (r2[i], highest_scores2[i]), textcoords="offset points", xytext=(0,10), ha='center')
 
 # Adding title and labels
-plt.title("Highest Score for Each n_steps", fontweight='bold')
-plt.xlabel("n_steps", fontweight='bold')
+plt.title("Highest Score for each time steps", fontweight='bold')
+plt.xlabel("Steps", fontweight='bold')
 plt.ylabel("Highest Score", fontweight='bold')
 plt.xticks([r + barWidth/2 for r in range(len(n_steps1))], n_steps1)  # Label x-axis indices with your n_steps values
 

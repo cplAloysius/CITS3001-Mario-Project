@@ -39,8 +39,8 @@ r1 = range(len(ns1))
 r2 = [x + barWidth for x in r1]
 
 # Create bars
-plt.bar(r1, ar1, width = barWidth, color = 'blue', edgecolor = 'grey', label='1e-6 Learning Rate')
-plt.bar(r2, ar2, width = barWidth, color = 'cyan', edgecolor = 'grey', label='1e-4 Learning Rate')
+plt.bar(r1, ar1, width = barWidth, edgecolor = 'grey', label='1e-6 Learning Rate')
+plt.bar(r2, ar2, width = barWidth, edgecolor = 'grey', label='1e-4 Learning Rate')
 
 # Adding annotations for each bar
 for i, txt in enumerate(ar1):
@@ -49,8 +49,8 @@ for i, txt in enumerate(ar2):
     plt.annotate(f"{txt}", (r2[i], ar2[i]), textcoords="offset points", xytext=(0,10), ha='center')
 
 # Adding title and labels
-plt.title("Average Reward for each n_steps", fontweight='bold')
-plt.xlabel("n_steps", fontweight='bold')
+plt.title("Average Reward for each time step", fontweight='bold')
+plt.xlabel("Steps", fontweight='bold')
 plt.ylabel("Average Reward", fontweight='bold')
 plt.xticks([r + barWidth/2 for r in range(len(ns1))], ns1)  # Label x-axis indices with your n_steps values
 
