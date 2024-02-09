@@ -5,7 +5,7 @@ This project aims to compare the performance between 2 agents in playing Super M
 - [Proximal Policy Optimisation(PPO) Agent](#ppo-agent)
 
 ## Rule Based Agent
-- Run `python train.py`
+- Run `python mario_objects.py` to see the rule based agent play mario
 
 ## PPO Agent
 - Run `python train.py` to train the model (you can train a new model or load a previously trained model)
